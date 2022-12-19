@@ -10,6 +10,8 @@ brew "git"
 brew "awscli"
 brew "nvm"
 brew "gh"
+brew "pnpm"
+brew "yarn"
 
 cask "font-fantasque-sans-mono-nerd-font"
 cask "font-meslo-lg-nerd-font"
