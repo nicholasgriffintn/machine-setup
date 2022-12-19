@@ -1,0 +1,45 @@
+#!/usr/local/bin/zsh
+
+#
+# Exports
+#
+export PATH="${HOME}/.bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export KEYTIMEOUT=1
+export ZSH_TMUX_FIXTERM=true
+
+# Homebrew
+eval "$(/usr/local/homebrew/bin/brew shellenv)"
+
+# Set up NPM global path
+export PATH=/usr/local/share/npm/bin:$PATH
+
+# NVM setup
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+
+# Fix GPG https://github.com/keybase/keybase-issues/issues/2798
+export GPG_TTY=$(tty)
+
+# Vi mode
+bindkey -v
+
+#
+# Antigen config
+#
+source ~/.bin/antigen/antigen.zsh
+
+antigen use oh-my-zsh
+
+# Default set of bundles
+antigen bundle git
+antigen bundle macos
+antigen bundle brew
+antigen bundle aws
+antigen bundle zsh-users/zsh-syntax-highlighting
+antigen bundle zsh-users/zsh-apple-touchbar
+
+# Theme
+antigen theme robbyrussell
+
+antigen apply
