@@ -8,6 +8,7 @@ brew "jq"
 brew "coreutils"
 brew "git"
 brew "awscli"
+brew "nvm"
 brew "gh"
 
 cask "font-fantasque-sans-mono-nerd-font"
