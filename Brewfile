@@ -12,6 +12,7 @@ brew "nvm"
 brew "gh"
 brew "pnpm"
 brew "yarn"
+brew "mas"
 
 cask "font-fantasque-sans-mono-nerd-font"
 cask "font-meslo-lg-nerd-font"
