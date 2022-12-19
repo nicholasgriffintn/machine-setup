@@ -2,7 +2,7 @@
   "entries": {
     "tap": {
       "homebrew/cask": {
-        "revision": "91f64b5bfe92675bebc1bd1d249ca92bad694779"
+        "revision": "38e80d454b183b6f56fd09f9ac52736b0a449f43"
       },
       "homebrew/cask-fonts": {
         "revision": "62cc58dccb06ec619fd5efefe30a6748abe32871"
@@ -479,6 +479,96 @@
             "appdir": "/Applications"
           }
         }
+      },
+      "raycast": {
+        "version": "1.45.1",
+        "options": {
+          "full_name": "raycast",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "1password": {
+        "version": "8.9.11",
+        "options": {
+          "full_name": "1password",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "1password-cli": {
+        "version": "2.11.0",
+        "options": {
+          "full_name": "1password/tap/1password-cli",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "notion": {
+        "version": "2.1.11",
+        "options": {
+          "full_name": "notion",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "dropbox": {
+        "version": "163.4.5456",
+        "options": {
+          "full_name": "dropbox",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "dropbox-capture": {
+        "version": "90.0.5",
+        "options": {
+          "full_name": "dropbox-capture",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "gpg-suite": {
+        "version": "2022.2",
+        "options": {
+          "full_name": "gpg-suite",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "cloudflare-warp": {
+        "version": "2022.10.107.0,20221116.68",
+        "options": {
+          "full_name": "cloudflare-warp",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "protonmail-bridge": {
+        "version": "2.3.0",
+        "options": {
+          "full_name": "protonmail-bridge",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
+      },
+      "vlc": {
+        "version": "3.0.18",
+        "options": {
+          "full_name": "vlc",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
       }
     }
   },
@@ -487,7 +577,7 @@
       "ventura": {
         "HOMEBREW_VERSION": "3.6.15",
         "HOMEBREW_PREFIX": "/opt/homebrew",
-        "Homebrew/homebrew-core": "9e50545a53d0b94ff4583d10da71bb0b0cc8eda7",
+        "Homebrew/homebrew-core": "136600cea87959f76d2a1968572afbf59a0eac80",
         "CLT": "14.2.0.0.1.1668646533",
         "Xcode": "14.1",
         "macOS": "13.0"
