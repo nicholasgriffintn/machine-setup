@@ -412,6 +412,15 @@
             "appdir": "/Applications"
           }
         }
+      },
+      "docker": {
+        "version": "4.15.0,93002",
+        "options": {
+          "full_name": "docker",
+          "args": {
+            "appdir": "/Applications"
+          }
+        }
       }
     }
   },

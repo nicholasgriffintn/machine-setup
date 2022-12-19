@@ -19,3 +19,4 @@ cask "visual-studio-code" unless system "test -e /Applications/Visual\\ Studio\\
 cask "google-chrome" unless system "test -e /Applications/Google\\ Chrome.app"
 cask "firefox" unless system "test -e /Applications/Firefox.app"
 cask "slack" unless system "test -e /Applications/Slack.app"
+cask "docker" unless system "test -e /Applications/Docker.app"
