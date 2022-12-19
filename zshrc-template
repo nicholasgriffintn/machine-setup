@@ -8,7 +8,7 @@ export KEYTIMEOUT=1
 export ZSH_TMUX_FIXTERM=true
 
 # Homebrew
-eval "$(/usr/local/homebrew/bin/brew shellenv)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Set up NPM global path
 export PATH=/usr/local/share/npm/bin:$PATH
