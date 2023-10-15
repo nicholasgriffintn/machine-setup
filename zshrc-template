@@ -39,6 +39,10 @@ load-nvmrc() {
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
 
+# pnpm
+export PNPM_HOME="~/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+
 # Fix GPG https://github.com/keybase/keybase-issues/issues/2798
 export GPG_TTY=$(tty)
 
