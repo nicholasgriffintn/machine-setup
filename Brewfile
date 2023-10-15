@@ -19,6 +19,7 @@ cask "font-meslo-lg-nerd-font"
 cask "font-fira-code"
 
 cask "cloudflare-warp"
+cask "protonvpn"
 cask "protonmail-bridge"
 cask "vlc"
 cask "gpg-suite"
