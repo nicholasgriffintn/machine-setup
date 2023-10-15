@@ -42,6 +42,8 @@ mas install 412448059
 mas install 1284863847
 mas install 1099568401
 mas install 1569813296
+mas install 1429033973
+mas install 1569600264
 
 if [ ! -f "~/workspace" ]; then
     echo "Setting up workspace..."
