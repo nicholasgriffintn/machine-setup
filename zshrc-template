@@ -49,6 +49,11 @@ export GPG_TTY=$(tty)
 # Vi mode
 bindkey -v
 
+# Theme
+
+eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
+source ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
+
 #
 # Antigen config
 #
@@ -68,10 +73,6 @@ antigen bundle zsh-users/zsh-syntax-highlighting
 antigen bundle zsh-users/zsh-apple-touchbar
 
 antigen apply
-
-# Theme
-
-eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
 
 # Neofetch
 

@@ -76,6 +76,13 @@ if [ ! -f "~/.nvm" ]; then
     nvm install --lts
 fi
 
+if [ ! -f "~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]; then
+    echo "Copying zsh syntax highlighting theme..."
+
+    cp $SCRIPT_DIR/catppuccin_mocha-zsh-syntax-highlighting.zsh ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
+fi
+
+
 echo "Complete!"
 
 sudo -k
