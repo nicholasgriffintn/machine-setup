@@ -3,6 +3,8 @@ tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 
 brew "python"
+brew "poetry"
+brew "go"
 brew "zsh"
 brew "jq"
 brew "coreutils"

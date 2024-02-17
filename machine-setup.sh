@@ -19,14 +19,16 @@ fi
 
 sudo -v
 
-echo "Installing Homebrew..."
+if [[ $(command -v brew) == "" ]]; then
+    echo "Installing Homebrew..."
 
-if [ ! -f /usr/local/bin/brew ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
     eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+    echo "Updating Homebrew"
+    brew update
 fi
-
 
 echo "Installing brew dependencies..."
 
@@ -57,7 +59,7 @@ if [ "$SKIP_MAC_INSTALLS" != "true" ]; then
     mas install 1569600264
 fi
 
-if [ ! -f "~/workspace" ]; then
+if [ ! -d "~/workspace" ]; then
     echo "Setting up workspace..."
 
     mkdir -p ~/workspace
@@ -65,7 +67,7 @@ fi
 
 cp $SCRIPT_DIR/zshrc-template ~/.zshrc
 
-if [ ! -f "~/.nvm" ]; then
+if [ ! -f "~/.nvm/nvm.sh" ]; then
     echo "Setting up NVM..."
 
     mkdir $HOME/.nvm
@@ -82,6 +84,10 @@ if [ ! -f "~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]; then
     cp $SCRIPT_DIR/catppuccin_mocha-zsh-syntax-highlighting.zsh ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
 fi
 
+if [ ! -d "~/.cargo" ]; then
+    echo "Installing Rust..."
+    curl https://sh.rustup.rs -sSf | sh
+fi
 
 echo "Complete!"
 
