@@ -56,7 +56,6 @@ source ~/.bin/antigen/antigen.zsh
 
 antigen use oh-my-zsh
 
-# Default set of bundles
 antigen bundle git
 antigen bundle command-not-found
 antigen bundle docker
@@ -68,7 +67,12 @@ antigen bundle zsh-users/zsh-autosuggestions
 antigen bundle zsh-users/zsh-syntax-highlighting
 antigen bundle zsh-users/zsh-apple-touchbar
 
-# Theme
-antigen theme robbyrussell
-
 antigen apply
+
+# Theme
+
+eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
+
+# Neofetch
+
+neofetch
