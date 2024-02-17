@@ -32,18 +32,30 @@ echo "Installing brew dependencies..."
 
 brew bundle --file=$SCRIPT_DIR/Brewfile
 
-echo "Installing mac store dependencies..."
+if [ "$SKIP_MAC_INSTALLS" != "true" ]; then
+    echo "Installing mac store dependencies..."
 
-mas install 441258766
-mas install 462054704
-mas install 462058435
-mas install 462062816
-mas install 412448059
-mas install 1284863847
-mas install 1099568401
-mas install 1569813296
-mas install 1429033973
-mas install 1569600264
+    # Magnet
+    mas install 441258766
+    # YubiKey Personalization Tool
+    mas install 638161122
+    # Word
+    mas install 462054704
+    # Eccel
+    mas install 462058435
+    # PowerPoint
+    mas install 462062816
+    # Forklift
+    mas install 412448059
+    # Unsplash Wallpapers
+    mas install 1284863847
+    # Home Assistant
+    mas install 1099568401
+    # Runcat
+    mas install 1429033973
+    # Pandan
+    mas install 1569600264
+fi
 
 if [ ! -f "~/workspace" ]; then
     echo "Setting up workspace..."

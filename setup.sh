@@ -8,6 +8,8 @@ echo "Configuring Machine..."
 
 . ./machine-setup.sh
 
-echo "Configuring Git..."
+if [ "$CONFIGURE_GIT" == "true" ]; then
+    echo "Configuring Git..."
 
-. ./git-setup.sh
+    . ./git-setup.sh
+fi
