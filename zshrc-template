@@ -3,16 +3,28 @@
 #
 # Exports
 #
-export PATH="${HOME}/.bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export KEYTIMEOUT=1
 export ZSH_TMUX_FIXTERM=true
 export WORKSPACE_DIR=~/workspace
+# Fix GPG https://github.com/keybase/keybase-issues/issues/2798
+export GPG_TTY=$(tty)
+
+# Function to add directories to PATH if they exist and are not already in PATH
+pathadd() {
+  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
+    export PATH="$1:$PATH"
+  fi
+}
 
 # Homebrew
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if command -v brew &>/dev/null; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+  echo "Homebrew not found. Please install Homebrew."
+fi
 
 # Set up NPM global path
-export PATH=/usr/local/share/npm/bin:$PATH
+pathadd "/usr/local/share/npm/bin"
 
 # NVM setup
 export NVM_DIR="$HOME/.nvm"
@@ -25,27 +37,35 @@ load-nvmrc() {
   local nvmrc_path="$(nvm_find_nvmrc)"
 
   if [ -n "$nvmrc_path" ]; then
-    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
-
-    if [ "$nvmrc_node_version" = "N/A" ]; then
-      nvm install
-    elif [ "$nvmrc_node_version" != "$node_version" ]; then
-      nvm use
-    fi
-  elif [ "$node_version" != "$(nvm version default)" ]; then
-    echo "Reverting to nvm default version"
+    nvm use
+  elif [ "$node_version" != "system" ]; then
     nvm use default
   fi
 }
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
 
-# pnpm
-export PNPM_HOME=~/Library/pnpm
-export PATH="$PNPM_HOME:$PATH"
-
-# Fix GPG https://github.com/keybase/keybase-issues/issues/2798
-export GPG_TTY=$(tty)
+# Add other directories to PATH
+pathadd "$HOME/Library/pnpm"
+pathadd "$HOME/.nvm/versions/node/v22.11.0/bin"
+pathadd "/opt/homebrew/bin"
+pathadd "/opt/homebrew/sbin"
+pathadd "$HOME/.bin"
+pathadd "/usr/local/bin"
+pathadd "/usr/bin"
+pathadd "/bin"
+pathadd "/usr/sbin"
+pathadd "/sbin"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/lib"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/git"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/command-not-found"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/docker"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/macos"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/brew"
+pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/aws"
+pathadd "$HOME/.antigen/bundles/zsh-users/zsh-completions"
+pathadd "$HOME/.antigen/bundles/zsh-users/zsh-autosuggestions"
+pathadd "$HOME/.antigen/bundles/zsh-users/zsh-syntax-highlighting"
 
 # Vi mode
 bindkey -v
@@ -71,7 +91,6 @@ antigen bundle aws
 antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zsh-autosuggestions
 antigen bundle zsh-users/zsh-syntax-highlighting
-antigen bundle zsh-users/zsh-apple-touchbar
 
 antigen apply
 

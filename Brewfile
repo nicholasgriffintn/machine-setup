@@ -1,5 +1,4 @@
 cask_args appdir: "/Applications"
-tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 
 brew "python"
@@ -44,6 +43,6 @@ cask "dropbox" unless system "test -e /Applications/Dropbox.app"
 cask "dropbox-capture" unless system "test -e /Applications/Dropbox\\ Capture.app"
 
 # NOTE: Sometimes I might want to comment these out
-cask "cloudflare-warp" unless system "test -e /Applications/Cloudflare\\ WARP.app"
-cask "protonvpn" unless system "test -e /Applications/ProtonVPN.app"
-cask "protonmail-bridge" unless system "test -e /Applications/Proton\\ Mail\\ Bridge.app"
+#cask "cloudflare-warp" unless system "test -e /Applications/Cloudflare\\ WARP.app"
+#cask "protonvpn" unless system "test -e /Applications/ProtonVPN.app"
+#cask "protonmail-bridge" unless system "test -e /Applications/Proton\\ Mail\\ Bridge.app"

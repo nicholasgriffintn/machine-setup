@@ -43,7 +43,7 @@ if [ "$SKIP_MAC_INSTALLS" != "true" ]; then
     mas install 638161122
     # Word
     mas install 462054704
-    # Eccel
+    # Excel
     mas install 462058435
     # PowerPoint
     mas install 462062816
