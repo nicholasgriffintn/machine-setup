@@ -1,5 +1,4 @@
 cask_args appdir: "/Applications"
-tap "homebrew/cask-fonts"
 
 brew "python"
 brew "poetry"
@@ -37,10 +36,7 @@ cask "google-chrome" unless system "test -e /Applications/Google\\ Chrome.app"
 cask "firefox" unless system "test -e /Applications/Firefox.app"
 cask "slack" unless system "test -e /Applications/Slack.app"
 cask "docker" unless system "test -e /Applications/Docker.app"
-cask "logi-options-plus" unless system "test -e /Applications/Logi\\ Options+.app"
 cask "vlc" unless system "test -e /Applications/VLC.app"
-cask "dropbox" unless system "test -e /Applications/Dropbox.app"
-cask "dropbox-capture" unless system "test -e /Applications/Dropbox\\ Capture.app"
 
 # NOTE: Sometimes I might want to comment these out
 #cask "cloudflare-warp" unless system "test -e /Applications/Cloudflare\\ WARP.app"

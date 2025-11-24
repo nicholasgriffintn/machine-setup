@@ -1,4 +1,4 @@
-#!/usr/local/bin/zsh
+#!/usr/bin/env zsh
 
 #
 # Exports
@@ -47,31 +47,20 @@ load-nvmrc
 
 # Add other directories to PATH
 pathadd "$HOME/Library/pnpm"
-pathadd "$HOME/.nvm/versions/node/v22.11.0/bin"
 pathadd "/opt/homebrew/bin"
 pathadd "/opt/homebrew/sbin"
 pathadd "$HOME/.bin"
+pathadd "$HOME/.cargo/bin"  # Rust binaries
 pathadd "/usr/local/bin"
 pathadd "/usr/bin"
 pathadd "/bin"
 pathadd "/usr/sbin"
 pathadd "/sbin"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/lib"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/git"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/command-not-found"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/docker"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/macos"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/brew"
-pathadd "$HOME/.antigen/bundles/robbyrussell/oh-my-zsh/plugins/aws"
-pathadd "$HOME/.antigen/bundles/zsh-users/zsh-completions"
-pathadd "$HOME/.antigen/bundles/zsh-users/zsh-autosuggestions"
-pathadd "$HOME/.antigen/bundles/zsh-users/zsh-syntax-highlighting"
 
 # Vi mode
 bindkey -v
 
 # Theme
-
 eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
 source ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
 
@@ -94,6 +83,19 @@ antigen bundle zsh-users/zsh-syntax-highlighting
 
 antigen apply
 
-# Neofetch
+#
+# Shell completions
+#
 
+# GitHub CLI completion
+if command -v gh &>/dev/null; then
+    eval "$(gh completion -s zsh)"
+fi
+
+# pnpm completion
+if command -v pnpm &>/dev/null; then
+    [[ -f ~/.config/tabtab/zsh/__tabtab.zsh ]] && . ~/.config/tabtab/zsh/__tabtab.zsh || true
+fi
+
+# Neofetch
 neofetch
