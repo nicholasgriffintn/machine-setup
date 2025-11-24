@@ -23,6 +23,8 @@ brew "certbot"
 brew "snappy"
 brew "neofetch"
 brew "oh-my-posh"
+brew "fzf"
+brew "zoxide"
 
 cask "font-fantasque-sans-mono-nerd-font"
 cask "font-meslo-lg-nerd-font"
