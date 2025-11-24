@@ -5,17 +5,20 @@
 | Command | What It Does |
 |---------|-------------|
 | `proj` | Fuzzy search and jump to any project |
-| `z projectname` | Smart jump to frequently used directories |
+| `cd projectname` | Smart jump to frequently used directories (zoxide) |
 | `ll` | List files with icons, git status, details |
 | `lt` | Show directory as a tree |
 | `rgs "text"` | Search for text in all files |
 | `rge "text"` | Search for text and open file in editor |
-| `..` / `...` / `....` | Go up 1/2/3 directories |
+| `up 3` | Go up 3 directories |
+| `..` / `...` | Go up 1/2 directories |
 | `gwt` | List git worktrees |
 | `gwtcd` | Fuzzy search and jump to a worktree |
 | `killport 3000` | Kill process on port 3000 |
 | `mkcd dirname` | Make directory and cd into it |
 | `extract file.zip` | Extract any archive type |
+| `cpath` | Copy current path to clipboard |
+| `cfile file.txt` | Copy file content to clipboard |
 | `brewdump` | Save current Homebrew packages to Brewfile |
 
 ## 📁 Quick Paths
@@ -64,6 +67,15 @@
 | `nrb` | `prb` | run build |
 | `nrt` | `prt` | run test |
 
+## 🚀 Productivity Boosters
+
+| Feature | How to use |
+|---------|------------|
+| **Magic Enter** | Press `Enter` on empty line to run `ls` (or `git status` in repos) |
+| **Global Aliases** | Pipe easily: `history G docker` (grep), `cat file L` (less), `echo hi C` (copy) |
+| **Suffix Aliases** | Open files directly: type `README.md` → opens in vim |
+| **Safety** | `rm`, `cp`, `mv` now ask for confirmation before overwriting |
+
 ## ⌨️ Keyboard Shortcuts
 
 | Keys | What It Does |
@@ -78,7 +90,7 @@
 ## 🎯 Tips
 
 1. **Type part of a command, then ↑** - Only shows matching history
-2. **Use `z` instead of `cd`** - It learns your most-used directories
+2. **Just type `cd name`** - It learns your most-used directories (zoxide)
 3. **Type `ll` in git repos** - See git status alongside files
 4. **Use `proj`** - When you forget where a project is
 5. **Use `..` shortcuts** - Faster than typing `cd ../..`

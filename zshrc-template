@@ -4,366 +4,89 @@
 # zmodload zsh/zprof
 
 #
-# Environment Variables
+# Path Setup (Native Zsh Deduplication)
 #
-export KEYTIMEOUT=1
-export ZSH_TMUX_FIXTERM=true
-export WORKSPACE_DIR=~/workspace
-
-# Locale
-export LANG=en_GB.UTF-8
-export LC_ALL=en_GB.UTF-8
-
-# Editor
-export EDITOR=vim
-export VISUAL="$EDITOR"
-
-# Pager
-export LESS='-R -M -i -j5'
-export PAGER='less'
-
-# Homebrew
-export HOMEBREW_NO_AUTO_UPDATE=1
-
-# Fix GPG https://github.com/keybase/keybase-issues/issues/2798
-export GPG_TTY=$(tty)
+typeset -U path PATH
+path=(
+  /usr/local/share/npm/bin
+  $HOME/Library/pnpm
+  /opt/homebrew/bin
+  /opt/homebrew/sbin
+  $HOME/.bin
+  $HOME/.cargo/bin
+  /usr/local/bin
+  /usr/bin
+  /bin
+  /usr/sbin
+  /sbin
+  $path
+)
 
 #
-# Functions
+# 1. Environment & Options (Pre-Plugin)
 #
-
-# Function to add directories to PATH if they exist and are not already in PATH
-pathadd() {
-  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
-    export PATH="$1:$PATH"
-  fi
-}
-
-# Create directory and cd into it
-mkcd() {
-  mkdir -p "$1" && cd "$1"
-}
-
-# Extract any archive
-extract() {
-  if [ -f "$1" ]; then
-    case "$1" in
-      *.tar.bz2)   tar xjf "$1"    ;;
-      *.tar.gz)    tar xzf "$1"    ;;
-      *.bz2)       bunzip2 "$1"    ;;
-      *.rar)       unrar x "$1"    ;;
-      *.gz)        gunzip "$1"     ;;
-      *.tar)       tar xf "$1"     ;;
-      *.tbz2)      tar xjf "$1"    ;;
-      *.tgz)       tar xzf "$1"    ;;
-      *.zip)       unzip "$1"      ;;
-      *.Z)         uncompress "$1" ;;
-      *.7z)        7z x "$1"       ;;
-      *)           echo "'$1' cannot be extracted" ;;
-    esac
-  else
-    echo "'$1' is not a valid file"
-  fi
-}
-
-# Show listening ports
-ports() {
-  lsof -iTCP -sTCP:LISTEN -n -P
-}
-
-# Kill process on specific port
-killport() {
-  if [ -z "$1" ]; then
-    echo "Usage: killport <port_number>"
-    return 1
-  fi
-  kill -9 $(lsof -ti:$1)
-}
-
-# Show external IP
-myip() {
-  curl -s https://api.ipify.org
-  echo
-}
-
-# Git worktree helpers
-gwt() {
-  if [ -z "$1" ]; then
-    git worktree list
-  else
-    git worktree add "$@"
-  fi
-}
-
-gwtr() {
-  git worktree remove "$1"
-}
-
-gwtcd() {
-  local worktree=$(git worktree list | fzf | awk '{print $1}')
-  [ -n "$worktree" ] && cd "$worktree"
-}
-
-# Smart search with ripgrep
-rgs() {
-  if command -v rg &>/dev/null; then
-    command rg --smart-case --hidden --glob '!.git' "$@"
-  else
-    echo "ripgrep not installed"
-  fi
-}
-
-# Search and edit with fzf
-rge() {
-  if ! command -v rg &>/dev/null || ! command -v fzf &>/dev/null; then
-    echo "Requires ripgrep and fzf"
-    return 1
-  fi
-  local file=$(rg --files-with-matches --no-messages "$1" | fzf --preview "rg --color=always --context=3 '$1' {}")
-  [ -n "$file" ] && $EDITOR "$file"
-}
-
-# Quick project switcher
-proj() {
-  if ! command -v fd &>/dev/null || ! command -v fzf &>/dev/null; then
-    echo "Requires fd and fzf"
-    return 1
-  fi
-  local project=$(fd --type d --max-depth 3 --hidden --exclude .git . ~/workspace ~/Documents/GitHub | fzf --preview 'eza --tree --level=1 --icons {} 2>/dev/null || ls -la {}')
-  [ -n "$project" ] && cd "$project"
-}
-
-# Homebrew bundle dump automation
-brewdump() {
-  brew bundle dump --file=~/Documents/GitHub/machine-setup/Brewfile --force
-  echo "✅ Brewfile updated"
-}
+[[ -f "$HOME/.config/zsh/exports.zsh" ]] && source "$HOME/.config/zsh/exports.zsh"
+[[ -f "$HOME/.config/zsh/options.zsh" ]] && source "$HOME/.config/zsh/options.zsh"
 
 #
-# PATH Setup
+# 2. Initialize Completion
 #
-
-# Homebrew
-if command -v brew &>/dev/null; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+autoload -Uz compinit
+# Check if dump file is older than 24h, if so regenerate
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
 else
-  echo "Homebrew not found. Please install Homebrew."
+  compinit -C
 fi
 
-pathadd "/usr/local/share/npm/bin"
-pathadd "$HOME/Library/pnpm"
-pathadd "/opt/homebrew/bin"
-pathadd "/opt/homebrew/sbin"
-pathadd "$HOME/.bin"
-pathadd "$HOME/.cargo/bin"
-pathadd "/usr/local/bin"
-pathadd "/usr/bin"
-pathadd "/bin"
-pathadd "/usr/sbin"
-pathadd "/sbin"
+#
+# 3. Antidote Plugin Manager
+#
+# Determine Homebrew prefix
+if [[ -d /opt/homebrew ]]; then
+  BREW_PREFIX="/opt/homebrew"
+else
+  BREW_PREFIX="/usr/local"
+fi
+
+# Load Antidote
+if [[ -f "$BREW_PREFIX/opt/antidote/share/antidote/antidote.zsh" ]]; then
+  source "$BREW_PREFIX/opt/antidote/share/antidote/antidote.zsh"
+  # Initialize plugins statically for speed
+  antidote load ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
+fi
 
 #
-# Lazy Load NVM (faster startup)
+# 4. Functions, Aliases, Bindings (Post-Plugin)
 #
-
-export NVM_DIR="$HOME/.nvm"
-
-# Lazy load nvm - only load when node/npm/nvm is called
-nvm() {
-  unset -f nvm node npm npx
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-  nvm "$@"
-}
-
-node() {
-  unset -f nvm node npm npx
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-  node "$@"
-}
-
-npm() {
-  unset -f nvm node npm npx
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-  npm "$@"
-}
-
-npx() {
-  unset -f nvm node npm npx
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-  npx "$@"
-}
-
-# Auto-load nvmrc on directory change (but only after nvm is loaded)
-autoload -U add-zsh-hook
-load-nvmrc() {
-  if command -v nvm_find_nvmrc &>/dev/null; then
-    local node_version="$(nvm version)"
-    local nvmrc_path="$(nvm_find_nvmrc)"
-
-    if [ -n "$nvmrc_path" ]; then
-      nvm use
-    elif [ "$node_version" != "system" ]; then
-      nvm use default
-    fi
-  fi
-}
-add-zsh-hook chpwd load-nvmrc
+[[ -f "$HOME/.config/zsh/completion.zsh" ]] && source "$HOME/.config/zsh/completion.zsh"
+[[ -f "$HOME/.config/zsh/functions.zsh" ]] && source "$HOME/.config/zsh/functions.zsh"
+[[ -f "$HOME/.config/zsh/aliases.zsh" ]] && source "$HOME/.config/zsh/aliases.zsh"
+[[ -f "$HOME/.config/zsh/bindings.zsh" ]] && source "$HOME/.config/zsh/bindings.zsh"
 
 #
-# Zsh Options
+# Tool Initialization
 #
 
-# History
-HISTFILE=~/.zsh_history
-HISTSIZE=50000
-SAVEHIST=50000
-setopt EXTENDED_HISTORY          # Write timestamp to history
-setopt HIST_EXPIRE_DUPS_FIRST    # Expire duplicates first
-setopt HIST_IGNORE_DUPS          # Don't record duplicates
-setopt HIST_IGNORE_ALL_DUPS      # Remove older duplicates
-setopt HIST_FIND_NO_DUPS         # Don't show duplicates in search
-setopt HIST_IGNORE_SPACE         # Don't record commands starting with space
-setopt HIST_VERIFY               # Show command with history expansion before running
-setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks
-setopt SHARE_HISTORY             # Share history between sessions
+# FNM (Fast Node Manager)
+if command -v fnm &>/dev/null; then
+  eval "$(fnm env --use-on-cd)"
+fi
 
-# Directory navigation
-setopt AUTO_CD                   # cd by typing directory name
-setopt AUTO_PUSHD                # Push directories onto stack
-setopt PUSHD_IGNORE_DUPS        # Don't push duplicates
-setopt PUSHD_MINUS              # Swap meaning of +/-
+# Zoxide (Smart cd)
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh --cmd cd)"
+fi
 
-# Completion
-setopt ALWAYS_TO_END            # Move cursor to end after completion
-setopt AUTO_MENU                # Show completion menu on tab
-setopt COMPLETE_IN_WORD         # Complete from both ends of word
-
-#
-# Vi Mode with Enhancements
-#
-
-bindkey -v
-
-# Fix backspace in vi mode
-bindkey -v '^?' backward-delete-char
-
-# Better vi mode bindings
-bindkey '^R' history-incremental-search-backward
-bindkey '^P' up-history
-bindkey '^N' down-history
-
-# jk to exit insert mode
-bindkey -M viins 'jk' vi-cmd-mode
-
-# Edit command in editor with 'v' in normal mode
-autoload -Uz edit-command-line
-zle -N edit-command-line
-bindkey -M vicmd 'v' edit-command-line
-
-# Change cursor shape based on vi mode
-function zle-keymap-select {
-  if [[ ${KEYMAP} == vicmd ]] || [[ $1 = 'block' ]]; then
-    echo -ne '\e[1 q'  # Block cursor
-  elif [[ ${KEYMAP} == main ]] || [[ ${KEYMAP} == viins ]] || [[ ${KEYMAP} = '' ]] || [[ $1 = 'beam' ]]; then
-    echo -ne '\e[5 q'  # Beam cursor
-  fi
-}
-zle -N zle-keymap-select
-
-# Start with beam cursor
-echo -ne '\e[5 q'
-
-# Reset cursor on each prompt
-function zle-line-init {
-  echo -ne '\e[5 q'
-}
-zle -N zle-line-init
-
-#
-# Colored Man Pages
-#
-
-export LESS_TERMCAP_mb=$'\e[1;32m'
-export LESS_TERMCAP_md=$'\e[1;32m'
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[01;33m'
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[1;4;31m'
-
-#
-# Antigen Plugin Manager
-#
-
-source ~/.bin/antigen/antigen.zsh
-
-antigen use oh-my-zsh
-
-# Core plugins (always load)
-antigen bundle git
-antigen bundle command-not-found
-antigen bundle macos
-antigen bundle brew
-
-# Conditional plugins (only if tools are installed)
-command -v docker &>/dev/null && antigen bundle docker
-command -v aws &>/dev/null && antigen bundle aws
-
-# Completion plugins
-antigen bundle zsh-users/zsh-completions
-antigen bundle zsh-users/zsh-autosuggestions
-antigen bundle zsh-users/zsh-syntax-highlighting
-antigen bundle zsh-users/zsh-history-substring-search
-
-antigen apply
-
-#
-# History Substring Search (bind after plugins load)
-#
-
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey -M vicmd 'k' history-substring-search-up
-bindkey -M vicmd 'j' history-substring-search-down
-
-#
-# Completion Configuration
-#
-
-# Case-insensitive completion
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
-
-# Menu selection
-zstyle ':completion:*' menu select
-
-# Group results by category
-zstyle ':completion:*' group-name ''
-
-# Add colors to completion
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
-
-# Better descriptions
-zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
-zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
-
-#
-# FZF Integration
-#
-
+# FZF
 if command -v fzf &>/dev/null; then
-  # Setup fzf key bindings and fuzzy completion
   eval "$(fzf --zsh)"
-
-  # Use fd for faster file finding (if available)
+  
   if command -v fd &>/dev/null; then
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   fi
-
+  
   # Catppuccin Mocha theme for fzf
   export FZF_DEFAULT_OPTS=" \
     --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
@@ -371,157 +94,30 @@ if command -v fzf &>/dev/null; then
     --color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
 fi
 
-#
-# Zoxide (smart cd)
-#
-
-if command -v zoxide &>/dev/null; then
-  eval "$(zoxide init zsh)"
-fi
-
-#
-# Theme
-#
-
-eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
-source ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
-
-# Enable async prompt updates for better performance
-export POSH_GIT_ENABLED=true
-
-#
-# Additional Completions
-#
-
-# GitHub CLI
+# GitHub CLI Completion
 if command -v gh &>/dev/null; then
   eval "$(gh completion -s zsh)"
 fi
 
-# pnpm
-if command -v pnpm &>/dev/null; then
-  [[ -f ~/.config/tabtab/zsh/__tabtab.zsh ]] && . ~/.config/tabtab/zsh/__tabtab.zsh || true
+#
+# Theme (Oh My Posh)
+#
+if command -v oh-my-posh &>/dev/null; then
+  eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
+fi
+source ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
+
+#
+# Startup Info
+#
+if [[ -z $FASTFETCH_SHOWN ]]; then
+  fastfetch --config ~/workspace/fastfetch-config.jsonc
+  export FASTFETCH_SHOWN=1
 fi
 
-#
-# Aliases
-#
+# Clean up stray background jobs
+precmd() {
+  jobs -pr
+}
 
-# Directory listing (with eza if available)
-if command -v eza &>/dev/null; then
-  alias ls='eza --icons --group-directories-first'
-  alias ll='eza -lah --icons --git --group-directories-first'
-  alias la='eza -A --icons --group-directories-first'
-  alias lt='eza --tree --level=2 --icons'
-  alias l='eza -F --icons'
-else
-  alias ls='ls -G'
-  alias ll='ls -lah'
-  alias la='ls -A'
-  alias l='ls -CF'
-fi
-
-# Better cat with bat
-if command -v bat &>/dev/null; then
-  alias cat='bat --style=auto'
-  alias catt='/bin/cat'  # Keep original cat available
-  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-fi
-
-# Directory navigation
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias -- -='cd -'
-alias d='dirs -v'  # Show directory stack
-
-# Directory hashing for quick navigation
-hash -d workspace=~/workspace
-hash -d github=~/Documents/GitHub
-hash -d setup=~/Documents/GitHub/machine-setup
-
-# Git shortcuts
-alias gs='git status'
-alias ga='git add'
-alias gc='git commit'
-alias gp='git pull'
-alias gph='git push'
-alias gco='git checkout'
-alias gd='git diff'
-alias gl='git log --oneline --graph --decorate'
-alias gb='git branch'
-
-# Docker shortcuts
-alias d='docker'
-alias dc='docker-compose'
-alias dps='docker ps'
-alias dimg='docker images'
-alias dclean='docker system prune -af --volumes'
-alias dstop='docker stop $(docker ps -aq)'
-alias drm='docker rm $(docker ps -aq)'
-alias dlogs='docker logs -f'
-alias dexec='docker exec -it'
-
-# Kubernetes (if installed)
-if command -v kubectl &>/dev/null; then
-  alias k='kubectl'
-  alias kgp='kubectl get pods'
-  alias kgs='kubectl get services'
-  alias kgd='kubectl get deployments'
-fi
-
-# Terraform (if installed)
-if command -v terraform &>/dev/null; then
-  alias tf='terraform'
-  alias tfi='terraform init'
-  alias tfp='terraform plan'
-  alias tfa='terraform apply'
-fi
-
-# Python
-alias py='python3'
-alias pip='pip3'
-
-# Development shortcuts
-alias serve='python3 -m http.server'
-
-# Quick npm/pnpm shortcuts
-alias ni='npm install'
-alias nid='npm install --save-dev'
-alias nr='npm run'
-alias nrs='npm run start'
-alias nrd='npm run dev'
-alias nrb='npm run build'
-alias nrt='npm run test'
-
-# pnpm equivalents
-alias pi='pnpm install'
-alias pid='pnpm install --save-dev'
-alias pr='pnpm run'
-alias prd='pnpm run dev'
-alias prb='pnpm run build'
-alias prt='pnpm run test'
-
-# Quick edit
-alias zshrc='$EDITOR ~/.zshrc'
-alias reload='source ~/.zshrc'
-
-#
-# Conditional Profile Loading
-#
-
-# Load work-specific config if it exists
-[[ -f ~/.zshrc.work ]] && source ~/.zshrc.work
-
-# Load local config if it exists
-[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
-
-#
-# Startup
-#
-
-# Show system info on new terminal
-neofetch
-
-# Performance profiling (uncomment to see results)
 # zprof
