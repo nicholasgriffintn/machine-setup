@@ -4,7 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-sudo chsh -s /bin/zsh "$USER"
+# Change shell to zsh if not already set
+if [ "$SHELL" != "/bin/zsh" ]; then
+    sudo chsh -s /bin/zsh "$USER"
+fi
 
 echo "Configuring Machine..."
 

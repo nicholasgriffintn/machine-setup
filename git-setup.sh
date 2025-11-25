@@ -75,8 +75,30 @@ else
 fi
 echo
 
-if command -v gum &> /dev/null; then
-    gum spin --spinner dot --title "Generating GPG key..." -- bash -c "
+# Check if a GPG key already exists for this email
+EXISTING_KEY=$(gpg --list-secret-keys --with-colons "$GIT_EMAIL" 2>/dev/null | grep "^sec:u:" | cut -f5 -d":" | head -n 1)
+
+if [ -n "$EXISTING_KEY" ]; then
+    if command -v gum &> /dev/null; then
+        gum style --foreground 2 "✓ GPG key already exists for $GIT_EMAIL"
+    else
+        echo "✓ GPG key already exists for $GIT_EMAIL"
+    fi
+    signingkey="$EXISTING_KEY"
+else
+    if command -v gum &> /dev/null; then
+        gum spin --spinner dot --title "Generating GPG key..." -- bash -c "
+            gpg --batch --generate-key - <<-EOS
+                 Key-Type: RSA
+                 Key-Length: 4096
+                 Name-Real: $GIT_NAME
+                 Name-Email: $GIT_EMAIL
+                 Expire-Date: 0
+                 %commit
+EOS
+        "
+    else
+        echo "Generating GPG key..."
         gpg --batch --generate-key - <<-EOS
              Key-Type: RSA
              Key-Length: 4096
@@ -85,20 +107,9 @@ if command -v gum &> /dev/null; then
              Expire-Date: 0
              %commit
 EOS
-    "
-else
-    echo "Generating GPG key..."
-    gpg --batch --generate-key - <<-EOS
-         Key-Type: RSA
-         Key-Length: 4096
-         Name-Real: $GIT_NAME
-         Name-Email: $GIT_EMAIL
-         Expire-Date: 0
-         %commit
-EOS
+    fi
+    signingkey=$(gpg --list-secret-keys --fixed-list-mode --with-colons | grep "^sec:u:" | cut -f5 -d":" | tail -n 1)
 fi
-
-signingkey=$(gpg --list-secret-keys --fixed-list-mode --with-colons | grep "^sec:u:" | cut -f5 -d":" | tail -n 1)
 echo
 
 if command -v gum &> /dev/null; then

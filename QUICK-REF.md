@@ -21,6 +21,38 @@
 | `cfile file.txt` | Copy file content to clipboard |
 | `brewdump` | Save current Homebrew packages to Brewfile |
 
+## 🎨 Charm CLI Tools
+
+### Soft Serve (Git Server)
+| Command | What It Does |
+|---------|-------------|
+| `serve` | Smart serve: git server in repos, HTTP server elsewhere |
+| `serve-start` | Start Soft Serve git server in background |
+| `serve-stop` | Stop Soft Serve server |
+| `serve-browse` | Browse repos via SSH TUI |
+
+### Skate (Key-Value Store)
+| Command | What It Does |
+|---------|-------------|
+| `note mykey "value"` | Save a note |
+| `note mykey` | Get a note |
+| `note list` | List all notes |
+| `note delete mykey` | Delete a note |
+| `snippet deploy "kubectl apply -f"` | Save a command snippet |
+| `snippet deploy` | Get a snippet |
+| `snippet list` | List all snippets |
+| `config api_key "xxx"` | Save a config value |
+| `config api_key` | Get a config value |
+| `config list` | List all configs |
+
+### Melt (SSH Key Backup)
+| Command | What It Does |
+|---------|-------------|
+| `ssh-backup` | Backup default SSH key to seed phrase |
+| `ssh-backup ~/.ssh/custom_key` | Backup specific key |
+| `ssh-restore` | Restore key from seed phrase |
+| `ssh-restore ~/.ssh/new_key` | Restore to specific location |
+
 ## 📁 Quick Paths
 
 | Shortcut | Goes To |

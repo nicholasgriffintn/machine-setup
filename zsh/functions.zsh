@@ -121,9 +121,9 @@ up() {
 function magic-enter {
   if [[ -z $BUFFER ]]; then
     echo ""
-    if (( $+commands[git] )) && git rev-parse --is-inside-work-tree &>/dev/null; then
+    if (( $+commands[git] )) && git rev-parse --is-inside-work-tree &> /dev/null; then
       git status
-    elif command -v eza &>/dev/null; then
+    elif command -v eza &> /dev/null; then
       eza --icons --group-directories-first
     else
       ls
@@ -134,3 +134,170 @@ function magic-enter {
   fi
 }
 
+#
+# Charm CLI Tools Functions
+#
+
+# Soft Serve - Git Server
+# Smart serve function - detects git repos and uses soft-serve, otherwise python server
+smart-serve() {
+  if git rev-parse --is-inside-work-tree &> /dev/null; then
+    echo "🍦 Starting Soft Serve git server..."
+    soft serve .
+  else
+    echo "🌐 Starting Python HTTP server on port ${1:-8000}..."
+    python3 -m http.server "${1:-8000}"
+  fi
+}
+
+# Start soft serve as a background service
+serve-start() {
+  if command -v soft &> /dev/null; then
+    echo "🍦 Starting Soft Serve server..."
+    soft serve &
+    echo "Git server running! Access via: ssh localhost -p 23231"
+  else
+    echo "soft-serve not installed. Run: brew install soft-serve"
+  fi
+}
+
+# Stop soft serve
+serve-stop() {
+  pkill -f "soft serve" && echo "✓ Soft Serve stopped" || echo "No Soft Serve process found"
+}
+
+# Browse repos with soft serve
+serve-browse() {
+  if command -v soft &> /dev/null; then
+    ssh localhost -p 23231
+  else
+    echo "soft-serve not installed. Run: brew install soft-serve"
+  fi
+}
+
+# Skate - Key-Value Store
+# Quick note taking
+note() {
+  if ! command -v skate &> /dev/null; then
+    echo "skate not installed. Run: brew install skate"
+    return 1
+  fi
+  
+  if [ -z "$1" ]; then
+    echo "Usage: note <key> [value]"
+    echo "       note <key>        - Get note"
+    echo "       note list         - List all notes"
+    echo "       note delete <key> - Delete note"
+    return 1
+  fi
+  
+  case "$1" in
+    list)
+      skate list
+      ;;
+    delete)
+      skate delete "$2"
+      ;;
+    *)
+      if [ -z "$2" ]; then
+        skate get "$1"
+      else
+        shift
+        skate set "$1" "$*"
+      fi
+      ;;
+  esac
+}
+
+# Save a snippet
+snippet() {
+  if ! command -v skate &> /dev/null; then
+    echo "skate not installed. Run: brew install skate"
+    return 1
+  fi
+  
+  if [ -z "$1" ]; then
+    echo "Usage: snippet <name> <command>"
+    echo "       snippet <name>  - Get snippet"
+    echo "       snippet list    - List all snippets"
+    return 1
+  fi
+  
+  if [ "$1" = "list" ]; then
+    skate list | grep "^snippet:"
+  elif [ -z "$2" ]; then
+    skate get "snippet:$1"
+  else
+    shift
+    skate set "snippet:$1" "$*"
+    echo "✓ Snippet saved: $1"
+  fi
+}
+
+# Quick config storage
+config() {
+  if ! command -v skate &> /dev/null; then
+    echo "skate not installed. Run: brew install skate"
+    return 1
+  fi
+  
+  if [ -z "$1" ]; then
+    echo "Usage: config <key> [value]"
+    echo "       config list - List all configs"
+    return 1
+  fi
+  
+  if [ "$1" = "list" ]; then
+    skate list | grep "^config:"
+  elif [ -z "$2" ]; then
+    skate get "config:$1"
+  else
+    shift
+    skate set "config:$1" "$*"
+    echo "✓ Config saved: $1"
+  fi
+}
+
+# Melt - SSH Key Backup
+# Backup SSH key to seed phrase
+ssh-backup() {
+  if ! command -v melt &> /dev/null; then
+    echo "melt not installed. Run: brew install melt"
+    return 1
+  fi
+  
+  local key_file="${1:-$HOME/.ssh/id_ed25519}"
+  
+  if [ ! -f "$key_file" ]; then
+    echo "Error: Key file not found: $key_file"
+    echo "Usage: ssh-backup [path-to-private-key]"
+    return 1
+  fi
+  
+  echo "🔑 Backing up SSH key: $key_file"
+  echo "⚠️  IMPORTANT: Store these words in a safe place!"
+  echo ""
+  melt "$key_file"
+}
+
+# Restore SSH key from seed phrase
+ssh-restore() {
+  if ! command -v melt &> /dev/null; then
+    echo "melt not installed. Run: brew install melt"
+    return 1
+  fi
+  
+  local output_file="${1:-$HOME/.ssh/id_ed25519_restored}"
+  
+  echo "🔑 Restoring SSH key from seed phrase"
+  echo "Enter your seed phrase when prompted..."
+  echo ""
+  melt -o "$output_file"
+  
+  if [ -f "$output_file" ]; then
+    chmod 600 "$output_file"
+    echo ""
+    echo "✓ Key restored to: $output_file"
+    echo "  Don't forget to set proper permissions and add to ssh-agent!"
+  fi
+}

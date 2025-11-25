@@ -96,7 +96,12 @@ alias py='python3'
 alias pip='pip3'
 
 # Development shortcuts
-alias serve='python3 -m http.server'
+# Smart serve - uses soft-serve for git repos, python server for others
+if command -v soft &>/dev/null; then
+  alias serve='smart-serve'
+else
+  alias serve='python3 -m http.server'
+fi
 
 # Quick npm/pnpm shortcuts
 alias ni='npm install'
