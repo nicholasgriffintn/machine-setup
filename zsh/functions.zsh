@@ -43,12 +43,6 @@ killport() {
   kill -9 $(lsof -ti:$1)
 }
 
-# Show external IP
-myip() {
-  curl -s https://api.ipify.org
-  echo
-}
-
 # Git worktree helpers
 unalias gwt 2>/dev/null
 gwt() {
@@ -300,4 +294,135 @@ ssh-restore() {
     echo "✓ Key restored to: $output_file"
     echo "  Don't forget to set proper permissions and add to ssh-agent!"
   fi
+}
+
+#
+# Cool Terminal Utilities
+#
+
+# Cheatsheet for any command
+cheat() {
+  if [ -z "$1" ]; then
+    echo "Usage: cheat <command>"
+    echo "Examples: cheat tar, cheat git, cheat curl"
+    return 1
+  fi
+  curl "cheat.sh/$1"
+}
+
+# Create a QR code from text
+qr() {
+  if [ -z "$1" ]; then
+    echo "Usage: qr <text or URL>"
+    return 1
+  fi
+  echo "$@" | curl -F-=\<- qrenco.de
+}
+
+# Upload and share files temporarily (24hrs)
+transfer() {
+  if [ -z "$1" ]; then
+    echo "Usage: transfer <file>"
+    echo "File will be available for 24 hours"
+    return 1
+  fi
+
+  if [ ! -f "$1" ]; then
+    echo "Error: File not found: $1"
+    return 1
+  fi
+
+  echo "📤 Uploading $(basename "$1")..."
+  url=$(curl --upload-file "$1" "https://transfer.sh/$(basename "$1")")
+  echo ""
+  echo "✓ File uploaded!"
+  echo "🔗 $url"
+  echo "$url" | pbcopy
+  echo "📋 URL copied to clipboard"
+}
+
+# GitHub repo stats (requires gh cli)
+ghstats() {
+  if ! command -v gh &>/dev/null; then
+    echo "GitHub CLI not installed. Run: brew install gh"
+    return 1
+  fi
+  gh repo view --json stargazerCount,forkCount,watchers,issues,description \
+    --jq '"⭐ Stars: \(.stargazerCount)\n🔱 Forks: \(.forkCount)\n👀 Watchers: \(.watchers.totalCount)\n📋 Issues: \(.issues.totalCount)\n📝 \(.description)"'
+}
+
+# Beautiful git log
+gla() {
+  git log --graph --all --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --abbrev-commit --date=relative
+}
+
+# Find largest files/directories
+biggies() {
+  du -sh * .* 2>/dev/null | sort -hr | head -${1:-10}
+}
+
+# Port check with process details
+whois-port() {
+  if [ -z "$1" ]; then
+    echo "Usage: whois-port <port_number>"
+    return 1
+  fi
+  echo "Checking port $1..."
+  lsof -i ":$1" | awk 'NR==1 || NR==2 {print}'
+}
+
+# Docker cleanup with safety check
+dclean-safe() {
+  echo "📊 Current Docker usage:"
+  docker system df
+  echo ""
+  echo "⚠️  This will remove:"
+  echo "  - All stopped containers"
+  echo "  - All unused networks"
+  echo "  - All dangling images"
+  echo "  - All build cache"
+  echo "  - All unused volumes"
+  echo ""
+
+  if command -v gum &>/dev/null; then
+    if gum confirm "Continue with cleanup?"; then
+      docker system prune -af --volumes
+      echo ""
+      echo "✓ Docker cleanup complete!"
+    else
+      echo "Cleanup cancelled"
+    fi
+  else
+    read -q "REPLY?Continue? (y/n) "
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      docker system prune -af --volumes
+      echo ""
+      echo "✓ Docker cleanup complete!"
+    else
+      echo "Cleanup cancelled"
+    fi
+  fi
+}
+
+# Quick HTTP server with specific port
+serve-http() {
+  local port="${1:-8000}"
+  echo "🌐 Starting HTTP server on http://localhost:$port"
+  python3 -m http.server "$port"
+}
+
+# Get public IP with details
+myip() {
+  echo "🌍 Public IP Information:"
+  curl -s https://ipinfo.io | jq -r '"IP: \(.ip)\nCity: \(.city)\nRegion: \(.region)\nCountry: \(.country)\nOrg: \(.org)"'
+}
+
+# Test website response time
+pingweb() {
+  if [ -z "$1" ]; then
+    echo "Usage: pingweb <url>"
+    return 1
+  fi
+  curl -o /dev/null -s -w "Response time: %{time_total}s\nHTTP code: %{http_code}\n" "$1"
 }

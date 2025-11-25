@@ -99,6 +99,11 @@ if command -v gh &>/dev/null; then
   eval "$(gh completion -s zsh)"
 fi
 
+# Atuin (Better shell history)
+if command -v atuin &>/dev/null; then
+  eval "$(atuin init zsh)"
+fi
+
 #
 # Theme (Oh My Posh)
 #

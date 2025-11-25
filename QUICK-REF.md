@@ -67,6 +67,7 @@
 
 | Shortcut | Full Command |
 |----------|--------------|
+| `lg` | lazygit (full TUI) |
 | `gs` | git status |
 | `ga .` | git add . |
 | `gc -m "msg"` | git commit -m "msg" |
@@ -75,7 +76,9 @@
 | `gco branch` | git checkout branch |
 | `gd` | git diff |
 | `gl` | git log --oneline --graph --decorate |
+| `gla` | git log (beautiful with colors) |
 | `gb` | git branch |
+| `ghstats` | Show GitHub repo stats |
 
 ## 🐳 Docker Shortcuts
 
@@ -121,13 +124,16 @@
 
 ## 🎯 Tips
 
-1. **Type part of a command, then ↑** - Only shows matching history
+1. **Type part of a command, then ↑** - Only shows matching history (or use Ctrl+R with Atuin!)
 2. **Just type `cd name`** - It learns your most-used directories (zoxide)
 3. **Type `ll` in git repos** - See git status alongside files
 4. **Use `proj`** - When you forget where a project is
 5. **Use `..` shortcuts** - Faster than typing `cd ../..`
-6. **Use `cat` on code files** - Now has syntax highlighting
+6. **Use `cat` on code files** - Now has syntax highlighting (bat)
 7. **Use `gwt` for multi-branch work** - No more stashing
+8. **Try `lg` instead of git commands** - LazyGit
+9. **Use `man <cmd>` for a better `man`** - Get simple examples first
+10. **Share files with `transfer`** - Quick shares
 
 ## 🔍 Search
 
@@ -152,5 +158,23 @@ reload          # Reload .zshrc after changes
 zshrc           # Edit .zshrc
 brewdump        # Update Brewfile with current packages
 ```
+## ⚡ Other Stuff
 
----
+| Command | What It Does |
+|---------|-------------|
+| `lg` | Launch LazyGit - git TUI |
+| `help <cmd>` | Show simple examples for any command (tldr) |
+| `top` | Launch btop - system monitor |
+| `cheat tar` | Get cheatsheet for any command |
+| `qr "text"` | Generate QR code in terminal |
+| `transfer file.zip` | Upload file, get shareable link (24hrs) |
+| `ghstats` | Show current repo GitHub stats |
+| `gla` | Beautiful git log with graph |
+| `myip` | Show your public IP with location |
+| `pingweb url` | Test website response time |
+| `biggies` | Find 10 largest files/folders here |
+| `whois-port 3000` | See what's running on a port |
+| `dclean-safe` | Safe Docker cleanup with preview |
+| `get api.example.com` | Quick HTTP GET request |
+| `post api.example.com key=value` | Quick HTTP POST |
+

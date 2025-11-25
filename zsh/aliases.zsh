@@ -123,3 +123,33 @@ alias prt='pnpm run test'
 # Quick edit
 alias zshrc='$EDITOR ~/.zshrc'
 alias reload='source ~/.zshrc'
+
+if command -v lazygit &>/dev/null; then
+  alias lg='lazygit'
+fi
+
+if command -v btop &>/dev/null; then
+  alias top='btop'
+  alias htop='btop'
+fi
+
+if command -v tlrc &>/dev/null; then
+  alias help='tlrc'
+  alias tldr='tlrc'
+fi
+
+if command -v http &>/dev/null; then
+  alias get='http GET'
+  alias post='http POST'
+  alias put='http PUT'
+  alias delete='http DELETE'
+fi
+
+# Better man pages with tldr
+man() {
+  if command -v tlrc &>/dev/null; then
+    tlrc "$1" 2>/dev/null || command man "$1"
+  else
+    command man "$1"
+  fi
+}
