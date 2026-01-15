@@ -106,8 +106,8 @@ fi
 
 # Install brew dependencies
 if command -v gum &> /dev/null; then
-    gum spin --spinner dot --title "Installing brew dependencies..." -- \
-        brew bundle --file="$SCRIPT_DIR/Brewfile"
+    gum style --foreground 212 "Installing brew dependencies..."
+    brew bundle --file="$SCRIPT_DIR/Brewfile" --verbose
 else
     echo "Installing brew dependencies..."
     brew bundle --file="$SCRIPT_DIR/Brewfile" --verbose
