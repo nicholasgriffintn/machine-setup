@@ -224,6 +224,79 @@ if [ "$UPDATE_MODE" != true ]; then
     fi
 fi
 
+# AI CLI Tools
+AI_TOOLS=(
+    "Claude Code"
+    "GitHub Copilot CLI"
+    "Gemini CLI"
+    "OpenAI Codex"
+    "OpenCode"
+)
+
+install_ai_tool() {
+    local tool=$1
+    case "$tool" in
+        "Claude Code")
+            if ! command -v claude &> /dev/null; then
+                spin "Installing Claude Code..." bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+            else
+                log success "Claude Code already installed"
+            fi
+            ;;
+        "GitHub Copilot CLI")
+            if ! command -v copilot &> /dev/null; then
+                spin "Installing GitHub Copilot CLI..." bash -c 'curl -fsSL https://gh.io/copilot-install | bash'
+            else
+                log success "GitHub Copilot CLI already installed"
+            fi
+            ;;
+        "Gemini CLI")
+            if ! command -v gemini &> /dev/null; then
+                spin "Installing Gemini CLI..." npm install -g @google/gemini-cli
+            else
+                log success "Gemini CLI already installed"
+            fi
+            ;;
+        "OpenAI Codex")
+            if ! command -v codex &> /dev/null; then
+                spin "Installing OpenAI Codex..." brew install --cask codex
+            else
+                log success "OpenAI Codex already installed"
+            fi
+            ;;
+        "OpenCode")
+            if ! command -v opencode &> /dev/null; then
+                spin "Installing OpenCode..." brew install opencode
+            else
+                log success "OpenCode already installed"
+            fi
+            ;;
+    esac
+}
+
+echo ""
+if $HAS_GUM; then
+    log info "Select AI CLI tools to install (optional):"
+    SELECTED_AI_TOOLS=$(printf '%s\n' "${AI_TOOLS[@]}" | gum choose --no-limit --header "Space to select, Enter to confirm (or just Enter to skip)")
+
+    if [ -n "$SELECTED_AI_TOOLS" ]; then
+        while IFS= read -r tool; do
+            install_ai_tool "$tool"
+        done <<< "$SELECTED_AI_TOOLS"
+    else
+        log warn "No AI tools selected, skipping"
+    fi
+else
+    if confirm "Install AI CLI tools?"; then
+        echo "Available tools:"
+        for i in "${!AI_TOOLS[@]}"; do
+            echo "  $((i+1)). ${AI_TOOLS[$i]}"
+        done
+        echo ""
+        log info "Run setup again with gum installed for multi-select, or install manually"
+    fi
+fi
+
 echo ""
 log_banner rounded "Verifying Installation"
 echo ""
