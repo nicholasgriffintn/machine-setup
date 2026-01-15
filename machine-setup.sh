@@ -43,7 +43,7 @@ if [ "$OS" != "Darwin" ]; then
     exit 1
 fi
 
-if ! ping -c 1 google.com &> /dev/null; then
+if ! ping -c 1 nicholasgriffin.dev &> /dev/null; then
     log error "No internet connectivity detected. Please check your network and try again."
     exit 1
 fi
@@ -180,8 +180,25 @@ else
 fi
 
 mkdir -p "$HOME/.config/zsh"
-cp "$SCRIPT_DIR/zsh/"*.zsh "$HOME/.config/zsh/"
-cp "$SCRIPT_DIR/zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
+if [ "$UPDATE_MODE" = true ]; then
+    for zsh_file in "$SCRIPT_DIR/zsh/"*.zsh; do
+        target="$HOME/.config/zsh/$(basename "$zsh_file")"
+        if [ -e "$target" ]; then
+            log warn "Skipping $(basename "$zsh_file") update (UPDATE_MODE)"
+        else
+            cp "$zsh_file" "$target"
+        fi
+    done
+
+    if [ -e "$HOME/.zsh_plugins.txt" ]; then
+        log warn "Skipping .zsh_plugins.txt update (UPDATE_MODE)"
+    else
+        cp "$SCRIPT_DIR/zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
+    fi
+else
+    cp "$SCRIPT_DIR/zsh/"*.zsh "$HOME/.config/zsh/"
+    cp "$SCRIPT_DIR/zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
+fi
 
 # Copy theme and configs
 if [ ! -f "$WORKSPACE_DIR/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]; then
@@ -203,14 +220,101 @@ fi
 # Neovim configuration
 if [ -d "$SCRIPT_DIR/nvim" ]; then
     mkdir -p "$HOME/.config/nvim"
-    ln -sf "$SCRIPT_DIR/nvim/init.lua" "$HOME/.config/nvim/init.lua"
-    log success "Linked nvim config"
+    if [ "$UPDATE_MODE" = true ] && [ -e "$HOME/.config/nvim/init.lua" ]; then
+        if [ -L "$HOME/.config/nvim/init.lua" ] && [ "$(readlink "$HOME/.config/nvim/init.lua")" = "$SCRIPT_DIR/nvim/init.lua" ]; then
+            log success "nvim config already linked"
+        else
+            log warn "Skipping nvim init.lua update (UPDATE_MODE)"
+        fi
+    else
+        ln -sf "$SCRIPT_DIR/nvim/init.lua" "$HOME/.config/nvim/init.lua"
+        log success "Linked nvim config"
+    fi
+fi
+
+# Symlink .config folders
+if [ -d "$SCRIPT_DIR/.config" ]; then
+    log info "Symlinking .config folders..."
+    mkdir -p "$HOME/.config"
+    for config_dir in "$SCRIPT_DIR/.config"/*; do
+        if [ -d "$config_dir" ]; then
+            dir_name=$(basename "$config_dir")
+            target="$HOME/.config/$dir_name"
+            if [ -L "$target" ]; then
+                log success "  $dir_name already symlinked"
+            elif [ -d "$target" ]; then
+                log warn "  $dir_name exists (not a symlink), skipping"
+            else
+                ln -s "$config_dir" "$target"
+                log success "  Linked $dir_name"
+            fi
+        fi
+    done
+fi
+
+# Symlink AI tooling directories for each provider
+# Format: "target_path:source_name"
+# target_path supports ~ for home directory
+AI_TOOLING_MAPPINGS=(
+    # OpenCode (~/.config/opencode/)
+    "~/.config/opencode/agent:agents"
+    "~/.config/opencode/command:commands"
+    "~/.config/opencode/skill:skills"
+    "~/.config/opencode/INSTRUCTIONS.md:INSTRUCTIONS.md"
+    # Claude (~/.claude/)
+    "~/.claude/agents:agents"
+    "~/.claude/hooks:hooks"
+    "~/.claude/commands:commands"
+    "~/.claude/skills:skills"
+    "~/.claude/CLAUDE.md:INSTRUCTIONS.md"
+    "~/.claude/settings.json:claude-settings.json"
+    # Codex (~/.codex/)
+    "~/.codex/skills:skills"
+    "~/.codex/AGENTS.md:INSTRUCTIONS.md"
+    # Copilot (~/.copilot/)
+    "~/.copilot/agents:agents"
+    "~/.copilot/skills:skills"
+    "~/.copilot/copilot-instructions.md:INSTRUCTIONS.md"
+    # Gemini (~/.gemini/)
+    "~/.gemini/skills:skills"
+    "~/.gemini/GEMINI.md:INSTRUCTIONS.md"
+)
+
+if [ -d "$SCRIPT_DIR/ai-tooling" ]; then
+    log info "Symlinking AI tooling..."
+    for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
+        IFS=':' read -r target_path src_name <<< "$mapping"
+        src_path="$SCRIPT_DIR/ai-tooling/$src_name"
+        target="${target_path/#\~/$HOME}"
+        target_dir=$(dirname "$target")
+        target_name=$(basename "$target")
+
+        if [ -e "$src_path" ]; then
+            mkdir -p "$target_dir"
+            if [ -L "$target" ]; then
+                log success "  $target_name already symlinked"
+            elif [ -e "$target" ]; then
+                log warn "  $target_name exists (not a symlink), skipping"
+            else
+                ln -s "$src_path" "$target"
+                log success "  Linked $target_name -> $src_name"
+            fi
+        fi
+    done
 fi
 
 # Tmux configuration
 if [ -f "$SCRIPT_DIR/tmux.conf" ]; then
-    ln -sf "$SCRIPT_DIR/tmux.conf" "$HOME/.tmux.conf"
-    log success "Linked tmux.conf"
+    if [ "$UPDATE_MODE" = true ] && [ -e "$HOME/.tmux.conf" ]; then
+        if [ -L "$HOME/.tmux.conf" ] && [ "$(readlink "$HOME/.tmux.conf")" = "$SCRIPT_DIR/tmux.conf" ]; then
+            log success "tmux.conf already linked"
+        else
+            log warn "Skipping tmux.conf update (UPDATE_MODE)"
+        fi
+    else
+        ln -sf "$SCRIPT_DIR/tmux.conf" "$HOME/.tmux.conf"
+        log success "Linked tmux.conf"
+    fi
 fi
 
 if [ ! -d "$HOME/.cargo" ]; then
@@ -266,7 +370,7 @@ install_ai_tool() {
             ;;
         "OpenCode")
             if ! command -v opencode &> /dev/null; then
-                spin "Installing OpenCode..." brew install opencode
+                spin "Installing OpenCode..." bash -c 'curl -fsSL https://opencode.ai/install | bash'
             else
                 log success "OpenCode already installed"
             fi

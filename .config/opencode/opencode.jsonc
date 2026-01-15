@@ -1,0 +1,41 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "theme": "orng",
+  "autoupdate": true,
+  "instructions": ["{env:HOME}/.config/opencode/INSTRUCTIONS.md"],
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+      "enabled": false,
+    },
+    "cloudflare-docs": {
+      "type": "remote",
+      "url": "https://docs.mcp.cloudflare.com/mcp",
+    },
+    "cloudflare-builds": {
+      "type": "remote",
+      "url": "https://builds.mcp.cloudflare.com/mcp",
+      "oauth": {},
+      "enabled": false,
+    },
+    "cloudflare-observability": {
+      "type": "remote",
+      "url": "https://observability.mcp.cloudflare.com/mcp",
+      "oauth": {},
+      "enabled": false,
+    },
+  },
+  "agent": {
+    "write": {
+      "description": "reviews, edits and drafts longer-form content in my voice.",
+      "model": "anthropic/claude-opus-4-5",
+      "mode": "primary",
+      "color": "#F5B638",
+      "permission": {
+        "bash": "deny",
+      },
+      "prompt": "You review, edit, and draft longer-form prose in a technical, practical voice. Lead with what something does, not what it is. Every word must earn its place - cut fluff ruthlessly. Prefer tables and bullet points over paragraphs when listing things. Keep prose paragraphs to 2-3 sentences max. Use imperative mood for instructions. Explain 'what it does' not 'what it is'. No marketing speak - ban 'perfect for', 'empowers', 'seamlessly', 'leverage', 'modernization'. Em-dashes are fine; avoid semi-colons. Use 'you' to address readers directly. Bold key terms on first use. Link to sources and docs liberally. Use numbered lists only when sequence matters. Be direct and opinionated - state tradeoffs honestly rather than hedging. Prefer British English spellings (organised, colour) but American technical terms are OK. Use code blocks for commands and file paths. Structure longer pieces with clear headers. Skip intros that restate the title.",
+    },
+  },
+}

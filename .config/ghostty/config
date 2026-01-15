@@ -1,0 +1,75 @@
+#
+# Ghostty Terminal Configuration
+#
+
+#
+# Theme & Appearance
+#
+theme = catppuccin-mocha.conf
+
+#
+# Font Settings
+#
+font-family = TX-02
+font-size = 15
+font-thicken = true                    # Thicker fonts for better readability
+
+#
+# Window Settings
+#
+window-padding-balance = true
+window-padding-x = 5
+window-padding-y = 0,10
+window-width = 350
+window-height = 472
+window-decoration = false              # Minimal chrome
+
+#
+# macOS Specific
+#
+macos-option-as-alt = true             # Use option as alt for terminal sequences
+macos-titlebar-style = hidden          # Cleaner look without titlebar
+
+#
+# Cursor
+#
+cursor-style = bar                     # Beam cursor to match zsh vi mode
+cursor-style-blink = false             # No blinking
+
+#
+# Mouse & Clipboard
+#
+mouse-hide-while-typing = true
+copy-on-select = true
+clipboard-paste-protection = true      # Warn on potentially dangerous pastes
+
+#
+# Shell Integration
+#
+shell-integration-features = true
+
+#
+# Links & URLs
+#
+link-url = true
+
+#
+# Scrollback
+#
+scrollback-limit = 50000               # Match zsh HISTSIZE
+
+#
+# Updates
+#
+auto-update = download
+auto-update-channel = tip
+
+#
+# Keybindings
+#
+keybind = shift+enter=text:\n
+
+#
+# Command Palette
+#
+command-palette-entry = title:vim mode,action:activate_key_table:vim
