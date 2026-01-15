@@ -12,7 +12,8 @@ theme = catppuccin-mocha.conf
 #
 font-family = TX-02
 font-size = 15
-font-thicken = true                    # Thicker fonts for better readability
+# Thicker fonts for better readability.
+font-thicken = true
 
 #
 # Window Settings
@@ -22,26 +23,32 @@ window-padding-x = 5
 window-padding-y = 0,10
 window-width = 350
 window-height = 472
-window-decoration = false              # Minimal chrome
+# Minimal chrome.
+window-decoration = none
 
 #
 # macOS Specific
 #
-macos-option-as-alt = true             # Use option as alt for terminal sequences
-macos-titlebar-style = hidden          # Cleaner look without titlebar
+# Use option as alt for terminal sequences.
+macos-option-as-alt = true
+# Cleaner look without titlebar.
+macos-titlebar-style = hidden
 
 #
 # Cursor
 #
-cursor-style = bar                     # Beam cursor to match zsh vi mode
-cursor-style-blink = false             # No blinking
+# Beam cursor to match zsh vi mode.
+cursor-style = bar
+# No blinking.
+cursor-style-blink = false
 
 #
 # Mouse & Clipboard
 #
 mouse-hide-while-typing = true
 copy-on-select = true
-clipboard-paste-protection = true      # Warn on potentially dangerous pastes
+# Warn on potentially dangerous pastes.
+clipboard-paste-protection = true
 
 #
 # Shell Integration
@@ -56,7 +63,8 @@ link-url = true
 #
 # Scrollback
 #
-scrollback-limit = 50000               # Match zsh HISTSIZE
+# Match zsh HISTSIZE.
+scrollback-limit = 50000
 
 #
 # Updates
@@ -68,8 +76,3 @@ auto-update-channel = tip
 # Keybindings
 #
 keybind = shift+enter=text:\n
-
-#
-# Command Palette
-#
-command-palette-entry = title:vim mode,action:activate_key_table:vim

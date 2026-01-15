@@ -270,9 +270,7 @@ fi
 # target_path supports ~ for home directory
 AI_TOOLING_MAPPINGS=(
     # OpenCode (~/.config/opencode/)
-    "~/.config/opencode/agents:agents"
     "~/.config/opencode/command:commands"
-    "~/.config/opencode/skill:skills"
     "~/.config/opencode/INSTRUCTIONS.md:INSTRUCTIONS.md"
     # Claude (~/.claude/)
     "~/.claude/agents:agents"
@@ -362,7 +360,7 @@ install_ai_tool() {
             ;;
         "GitHub Copilot CLI")
             if ! command -v copilot &> /dev/null; then
-                spin "Installing GitHub Copilot CLI..." bash -c 'curl -fsSL https://gh.io/copilot-install | bash'
+                spin "Installing GitHub Copilot CLI..." bash -c 'brew install --cask copilot-cli'
             else
                 log success "GitHub Copilot CLI already installed"
             fi
