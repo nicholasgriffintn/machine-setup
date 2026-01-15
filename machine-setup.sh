@@ -15,111 +15,74 @@ fi
 # Keep sudo alive in the background
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
+source "$SCRIPT_DIR/lib/gum-utils.sh"
+
 # Detect update mode
 UPDATE_MODE=false
 if [ -f "$HOME/.zshrc" ] && grep -q "oh-my-posh" "$HOME/.zshrc" 2>/dev/null; then
-    if command -v gum &> /dev/null; then
-        gum style --border rounded --padding "1 2" --margin "1" \
-            "Existing setup detected!" \
-            "This appears to be a machine that has already been set up."
-        
-        if gum confirm "Run in UPDATE mode? (won't overwrite configs)"; then
-            UPDATE_MODE=true
-            gum style --foreground 2 "✓ Running in UPDATE mode"
-        else
-            gum style --foreground 3 "⚠ Running in FULL setup mode"
-        fi
+    log_banner rounded "Existing setup detected!" "This appears to be a machine that has already been set up."
+
+    if confirm "Run in UPDATE mode? (won't overwrite configs)"; then
+        UPDATE_MODE=true
+        log info "Running in UPDATE mode"
     else
-        echo "Existing setup detected!"
-        echo "This appears to be a machine that has already been set up."
-        echo ""
-        read -p "Do you want to run in UPDATE mode (safe, won't overwrite configs)? (Y/N) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            UPDATE_MODE=true
-            echo "✓ Running in UPDATE mode"
-        else
-            echo "⚠ Running in FULL setup mode"
-        fi
+        log info "Running in FULL setup mode"
     fi
     echo
 fi
 
-if command -v gum &> /dev/null; then
-    gum style --border double --padding "1 2" --margin "1" --foreground 212 \
-        "Machine Setup Started: $(date)" \
-        "Mode: $([ "$UPDATE_MODE" = true ] && echo "UPDATE" || echo "FULL SETUP")" \
-        "Log: $LOG_FILE"
-else
-    echo "=== Machine Setup Started: $(date) ==="
-    echo "Mode: $([ "$UPDATE_MODE" = true ] && echo "UPDATE" || echo "FULL SETUP")"
-    echo "Log file: $LOG_FILE"
-fi
+log_banner double \
+    "Machine Setup Started: $(date)" \
+    "Mode: $([ "$UPDATE_MODE" = true ] && echo "UPDATE" || echo "FULL SETUP")" \
+    "Log: $LOG_FILE"
 echo
 
-# Change shell to zsh if not already set
+OS=$(uname -s 2> /dev/null)
+if [ "$OS" != "Darwin" ]; then
+    log error "This setup script is intended for macOS systems only. Detected OS: $OS"
+    exit 1
+fi
+
+if ! ping -c 1 google.com &> /dev/null; then
+    log error "No internet connectivity detected. Please check your network and try again."
+    exit 1
+fi
+
 if [ "$SHELL" != "/bin/zsh" ]; then
-    if command -v gum &> /dev/null; then
-        gum style --foreground 212 "Changing default shell to zsh..."
-    else
-        echo "Changing default shell to zsh..."
-    fi
+    log info "Changing default shell to zsh..."
     sudo chsh -s /bin/zsh "$USER"
 else
-    if command -v gum &> /dev/null; then
-        gum style --foreground 2 "✓ Shell is already set to zsh"
-    else
-        echo "✓ Shell is already set to zsh"
-    fi
+    log success "Shell is already set to zsh"
 fi
 sudo -v
 
-# Install/Update Homebrew
+if [ ! -f "$HOME/.ssh/id_rsa.pub" ] && [ ! -f "$HOME/.ssh/id_ed25519.pub" ]; then
+    log info "Generating a new SSH key..."
+    EMAIL=$(input "Enter your email for the SSH key" "")
+    ssh-keygen -t ed25519 -C "$EMAIL" -f "$HOME/.ssh/id_ed25519" -N ""
+    log success "SSH key generated at ~/.ssh/id_ed25519"
+else
+    log success "SSH key already exists"
+fi
+
 if [[ $(command -v brew) == "" ]]; then
-    if command -v gum &> /dev/null; then
-        gum spin --spinner dot --title "Installing Homebrew..." -- \
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    else
-        echo "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    # Add brew shellenv to .zprofile if not already present
+    spin "Installing Homebrew..." /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     if [ -f ~/.zprofile ] && grep -q 'brew shellenv' ~/.zprofile; then
-        if command -v gum &> /dev/null; then
-            gum style --foreground 2 "✓ Homebrew shellenv already in .zprofile"
-        fi
+        log success "Homebrew shellenv already in .zprofile"
     else
         echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-        if command -v gum &> /dev/null; then
-            gum style --foreground 2 "✓ Added Homebrew shellenv to .zprofile"
-        fi
+        log success "Added Homebrew shellenv to .zprofile"
     fi
     eval "$(/opt/homebrew/bin/brew shellenv)"
 else
-    if command -v gum &> /dev/null; then
-        gum spin --spinner dot --title "Updating Homebrew..." -- brew update
-    else
-        echo "Updating Homebrew"
-        brew update
-    fi
+    spin "Updating Homebrew..." brew update
 fi
 
-# Install brew dependencies
-if command -v gum &> /dev/null; then
-    gum style --foreground 212 "Installing brew dependencies..."
-    brew bundle --file="$SCRIPT_DIR/Brewfile" --verbose
-else
-    echo "Installing brew dependencies..."
-    brew bundle --file="$SCRIPT_DIR/Brewfile" --verbose
-fi
+log info "Installing brew dependencies..."
+brew bundle --file="$SCRIPT_DIR/Brewfile" --verbose
 
-# Configure git-delta
 if command -v delta &> /dev/null; then
-    if command -v gum &> /dev/null; then
-        gum style --foreground 2 "✓ Configuring git-delta..."
-    else
-        echo "Configuring git-delta..."
-    fi
+    log success "Configuring git-delta..."
     git config --global core.pager "delta"
     git config --global interactive.diffFilter "delta --color-only"
     git config --global delta.navigate true
@@ -156,125 +119,69 @@ MAS_APP_NAMES=(
     "Pandan"
 )
 
-if command -v gum &> /dev/null; then
-    gum style --foreground 212 "Select Mac App Store applications to install:"
-    
-    # Sort app names for display
+install_mas_app() {
+    local app_id=$1
+    local app_name=$2
+    local installed_apps=$3
+
+    if echo "$installed_apps" | grep -q "^$app_id$"; then
+        log success "  $app_name already installed"
+    else
+        spin "  Installing $app_name..." mas install "$app_id"
+    fi
+}
+
+INSTALLED_APPS=$(mas list | awk '{print $1}')
+
+if $HAS_GUM; then
+    log info "Select Mac App Store applications to install:"
     SORTED_NAMES=($(printf '%s\n' "${MAS_APP_NAMES[@]}" | sort))
-    
-    # Let user select apps (multi-select with --no-limit)
     SELECTED_APPS=$(printf '%s\n' "${SORTED_NAMES[@]}" | gum choose --no-limit --header "Use space to select, enter to confirm")
-    
+
     if [ -n "$SELECTED_APPS" ]; then
-        INSTALLED_APPS=$(mas list | awk '{print $1}')
-        
-        install_mas_app() {
-            local app_id=$1
-            local app_name=$2
-            
-            if echo "$INSTALLED_APPS" | grep -q "^$app_id$"; then
-                gum style --foreground 2 "  ✓ $app_name already installed"
-            else
-                gum spin --spinner dot --title "  Installing $app_name..." -- mas install "$app_id"
-            fi
-        }
-        
-        # Install selected apps
         while IFS= read -r app_name; do
-            # Find the index of the app name
             for i in "${!MAS_APP_NAMES[@]}"; do
                 if [ "${MAS_APP_NAMES[$i]}" = "$app_name" ]; then
-                    install_mas_app "${MAS_APP_IDS[$i]}" "$app_name"
+                    install_mas_app "${MAS_APP_IDS[$i]}" "$app_name" "$INSTALLED_APPS"
                     break
                 fi
             done
         done <<< "$SELECTED_APPS"
     else
-        gum style --foreground 3 "No apps selected, skipping Mac App Store installations"
+        log warn "No apps selected, skipping Mac App Store installations"
     fi
 else
-    # Fallback for non-gum installation
-    echo "Installing Mac App Store applications..."
-    INSTALLED_APPS=$(mas list | awk '{print $1}')
-    
-    install_mas_app() {
-        local app_id=$1
-        local app_name=$2
-        
-        if echo "$INSTALLED_APPS" | grep -q "^$app_id$"; then
-            echo "  ✓ $app_name already installed"
-        else
-            echo "  → Installing $app_name..."
-            mas install "$app_id"
-        fi
-    }
-    
-    install_mas_app 441258766 "Magnet"
-    install_mas_app 638161122 "YubiKey Personalization Tool"
-    install_mas_app 462054704 "Microsoft Word"
-    install_mas_app 462058435 "Microsoft Excel"
-    install_mas_app 462062816 "Microsoft PowerPoint"
-    install_mas_app 412448059 "Forklift"
-    install_mas_app 1284863847 "Unsplash Wallpapers"
-    install_mas_app 1099568401 "Home Assistant"
-    install_mas_app 1429033973 "Runcat"
-    install_mas_app 1569600264 "Pandan"
+    log info "Installing Mac App Store applications..."
+    for i in "${!MAS_APP_IDS[@]}"; do
+        install_mas_app "${MAS_APP_IDS[$i]}" "${MAS_APP_NAMES[$i]}" "$INSTALLED_APPS"
+    done
 fi
 
-# Setup workspace
-if command -v gum &> /dev/null; then
-    DEFAULT_WORKSPACE="$HOME/workspace"
-    WORKSPACE_DIR=$(gum input --placeholder "$DEFAULT_WORKSPACE" --prompt "Workspace directory: " --value "$DEFAULT_WORKSPACE")
-    if [ -z "$WORKSPACE_DIR" ]; then
-        WORKSPACE_DIR="$DEFAULT_WORKSPACE"
-    fi
-else
-    WORKSPACE_DIR="$HOME/workspace"
-fi
+DEFAULT_WORKSPACE="$HOME/workspace"
+WORKSPACE_DIR=$(input "Workspace directory:" "$DEFAULT_WORKSPACE")
 
 if [ ! -d "$WORKSPACE_DIR" ]; then
     mkdir -p "$WORKSPACE_DIR"
-    if command -v gum &> /dev/null; then
-        gum style --foreground 2 "✓ Created workspace directory: $WORKSPACE_DIR"
-    else
-        echo "Created workspace directory: $WORKSPACE_DIR"
-    fi
+    log success "Created workspace directory: $WORKSPACE_DIR"
 fi
 
-# Config Setup
 if [ "$UPDATE_MODE" != true ]; then
     if [ -f "$HOME/.zshrc" ]; then
         BACKUP_FILE="$HOME/.zshrc.backup.$(date +%s)"
-        if command -v gum &> /dev/null; then
-            gum style --foreground 3 "Backing up existing .zshrc to $BACKUP_FILE"
-        else
-            echo "Backing up existing .zshrc to $BACKUP_FILE"
-        fi
+        log warn "Backing up existing .zshrc to $BACKUP_FILE"
         cp "$HOME/.zshrc" "$BACKUP_FILE"
     fi
 
-    if command -v gum &> /dev/null; then
-        gum style --foreground 212 "Installing Zsh configuration..."
-    else
-        echo "Installing Zsh configuration..."
-    fi
+    log info "Installing Zsh configuration..."
     cp "$SCRIPT_DIR/zshrc-template" "$HOME/.zshrc"
-    
-    mkdir -p "$HOME/.config/zsh"
-    cp "$SCRIPT_DIR/zsh/"*.zsh "$HOME/.config/zsh/"
-    cp "$SCRIPT_DIR/zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
 else
-    if command -v gum &> /dev/null; then
-        gum style --foreground 3 "Skipping .zshrc update (UPDATE_MODE)"
-        gum style --foreground 212 "Updating Zsh partials..."
-    else
-        echo "Skipping .zshrc update (UPDATE_MODE enabled)"
-        echo "Updating Zsh partials..."
-    fi
-    mkdir -p "$HOME/.config/zsh"
-    cp "$SCRIPT_DIR/zsh/"*.zsh "$HOME/.config/zsh/"
-    cp "$SCRIPT_DIR/zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
+    log warn "Skipping .zshrc update (UPDATE_MODE)"
+    log info "Updating Zsh partials..."
 fi
+
+mkdir -p "$HOME/.config/zsh"
+cp "$SCRIPT_DIR/zsh/"*.zsh "$HOME/.config/zsh/"
+cp "$SCRIPT_DIR/zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
 
 # Copy theme and configs
 if [ ! -f "$WORKSPACE_DIR/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]; then
@@ -293,82 +200,53 @@ if [ -f "$SCRIPT_DIR/fastfetch-logo.txt" ]; then
     fi
 fi
 
-# Install Rust
 if [ ! -d "$HOME/.cargo" ]; then
-    if command -v gum &> /dev/null; then
-        gum spin --spinner dot --title "Installing Rust..." -- \
-            bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'
-    else
-        echo "Installing Rust..."
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-    fi
+    spin "Installing Rust..." bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'
     . "$HOME/.cargo/env"
 fi
 
-# Run macOS defaults
 if [ "$UPDATE_MODE" != true ]; then
-    if command -v gum &> /dev/null; then
-        if gum confirm "Apply macOS defaults (Finder, Dock, keyboard settings)?"; then
-            gum spin --spinner dot --title "Applying macOS defaults..." -- \
-                bash "$SCRIPT_DIR/macos-defaults.sh"
-        fi
-    else
-        echo "Applying macOS defaults..."
-        bash "$SCRIPT_DIR/macos-defaults.sh"
+    if confirm "Apply macOS defaults (Finder, Dock, keyboard settings)?"; then
+        spin "Applying macOS defaults..." bash "$SCRIPT_DIR/macos-defaults.sh"
     fi
 fi
 
-# Verification
 echo ""
-if command -v gum &> /dev/null; then
-    gum style --border rounded --padding "1 2" --foreground 212 "Verifying Installation"
-else
-    echo "=== Verifying Installation ==="
-fi
+log_banner rounded "Verifying Installation"
 echo ""
 
-# Collect verification data
 VERIFICATION_DATA=()
 
 verify_command() {
     local cmd=$1
     local name=$2
     local version=""
-    
+
     if command -v "$cmd" &> /dev/null; then
-        # Try different version flag formats
         case "$cmd" in
-            go)
-                version=$(go version 2>&1 | head -n 1)
-                ;;
-            melt)
-                version=$(melt version 2>&1 | head -n 1 || echo "installed")
-                ;;
-            soft)
-                version=$(soft version 2>&1 | head -n 1 || echo "installed")
-                ;;
+            go)   version=$(go version 2>&1 | head -n 1) ;;
+            melt) version=$(melt version 2>&1 | head -n 1 || echo "installed") ;;
+            soft) version=$(soft version 2>&1 | head -n 1 || echo "installed") ;;
             *)
                 version=$($cmd --version 2>&1 | head -n 1)
-                # If --version failed, try -version
                 if [[ $version == *"unknown"* ]] || [[ $version == *"illegal"* ]] || [[ $version == *"Error"* ]]; then
                     version=$($cmd -version 2>&1 | head -n 1 || echo "installed")
                 fi
                 ;;
         esac
-        
-        # Clean up error messages
+
         if [[ $version == *"Error"* ]] || [[ $version == *"unknown"* ]] || [[ $version == *"illegal"* ]]; then
             version="installed"
         fi
-        
-        if command -v gum &> /dev/null; then
+
+        if $HAS_GUM; then
             VERIFICATION_DATA+=("$name|✓|$version")
         else
             echo "✓ $name: $version"
         fi
         return 0
     else
-        if command -v gum &> /dev/null; then
+        if $HAS_GUM; then
             VERIFICATION_DATA+=("$name|✗|NOT FOUND")
         else
             echo "✗ $name: NOT FOUND"
@@ -419,29 +297,34 @@ else
 fi
 
 echo ""
-if command -v gum &> /dev/null; then
-    gum format -- "# 🎉 Setup Complete!" \
+if $HAS_GUM; then
+    gum format -- "# Setup Complete!" \
         "" \
         "Your machine has been successfully configured!" \
         "" \
-        "## 📋 Summary" \
+        "## Summary" \
         "- **Mode**: $([ "$UPDATE_MODE" = true ] && echo "UPDATE" || echo "FULL SETUP")" \
         "- **Workspace**: \`$WORKSPACE_DIR\`" \
         "- **Log File**: \`$LOG_FILE\`" \
         "" \
-        "## 🚀 Next Steps" \
+        "## Next Steps" \
         "1. Restart your terminal or run: \`source ~/.zshrc\`" \
         "2. Verify your setup with: \`which fnm\` and other tools" \
         "3. Customize your \`.zshrc\` as needed" \
         "" \
-        "## 💡 Useful Commands" \
+        "## Useful Commands" \
         "- \`brew update && brew upgrade\` - Update packages" \
         "- \`gh auth login\` - Authenticate with GitHub"
 else
     echo "=== Setup Complete! ==="
-    echo "Log file saved to: $LOG_FILE"
+    echo "Mode: $([ "$UPDATE_MODE" = true ] && echo "UPDATE" || echo "FULL SETUP")"
     echo "Workspace: $WORKSPACE_DIR"
-    echo "Please restart your terminal or run: source ~/.zshrc"
+    echo "Log file: $LOG_FILE"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Restart your terminal or run: source ~/.zshrc"
+    echo "  2. Verify your setup with: which fnm"
+    echo "  3. Customize your .zshrc as needed"
 fi
 echo ""
 

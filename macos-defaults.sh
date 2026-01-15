@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source "$SCRIPT_DIR/lib/gum-utils.sh"
+
 # Close any open System Preferences panes, to prevent them from overriding
 # settings we’re about to change
 osascript -e 'tell application "System Preferences" to quit'
@@ -10,7 +13,7 @@ sudo -v
 # Keep-alive: update existing `sudo` time stamp until `.macos` has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-echo "Setting macOS defaults..."
+log info "Setting macOS defaults..."
 
 ###############################################################################
 # General UI/UX                                                               #
@@ -191,4 +194,4 @@ for app in "Activity Monitor" \
 	"SystemUIServer"; do
 	killall "${app}" &> /dev/null
 done
-echo "Done. Note that some of these changes require a logout/restart to take effect."
+log success "Done. Note that some of these changes require a logout/restart to take effect."
