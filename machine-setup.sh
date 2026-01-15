@@ -243,7 +243,20 @@ if [ -d "$SCRIPT_DIR/.config" ]; then
             if [ -L "$target" ]; then
                 log success "  $dir_name already symlinked"
             elif [ -d "$target" ]; then
-                log warn "  $dir_name exists (not a symlink), skipping"
+                log warn "  $dir_name exists (not a symlink), linking contents"
+                while IFS= read -r -d '' item; do
+                    rel_path="${item#"$config_dir"/}"
+                    target_item="$target/$rel_path"
+                    if [ -L "$target_item" ]; then
+                        log success "    $rel_path already symlinked"
+                    elif [ -e "$target_item" ]; then
+                        log warn "    $rel_path exists (not a symlink), skipping"
+                    else
+                        mkdir -p "$(dirname "$target_item")"
+                        ln -s "$item" "$target_item"
+                        log success "    Linked $rel_path"
+                    fi
+                done < <(find "$config_dir" -type f -print0)
             else
                 ln -s "$config_dir" "$target"
                 log success "  Linked $dir_name"
@@ -257,7 +270,7 @@ fi
 # target_path supports ~ for home directory
 AI_TOOLING_MAPPINGS=(
     # OpenCode (~/.config/opencode/)
-    "~/.config/opencode/agent:agents"
+    "~/.config/opencode/agents:agents"
     "~/.config/opencode/command:commands"
     "~/.config/opencode/skill:skills"
     "~/.config/opencode/INSTRUCTIONS.md:INSTRUCTIONS.md"
