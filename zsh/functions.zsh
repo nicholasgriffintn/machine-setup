@@ -426,3 +426,69 @@ pingweb() {
   fi
   curl -o /dev/null -s -w "Response time: %{time_total}s\nHTTP code: %{http_code}\n" "$1"
 }
+
+# Get current Unix timestamp
+unixts() {
+  date +%s
+}
+
+# Get current ISO 8601 timestamp
+iso8601() {
+  date -u +'%Y-%m-%dT%H:%M:%SZ'
+}
+
+# Get Unix timestamp from N minutes ago
+mins-ago() {
+  if [ -z "$1" ]; then
+    echo "Usage: mins-ago <minutes>"
+    return 1
+  fi
+  echo $(($(date +%s) - 60 * $1))
+}
+
+# Get Unix timestamp from N hours ago
+hours-ago() {
+  if [ -z "$1" ]; then
+    echo "Usage: hours-ago <hours>"
+    return 1
+  fi
+  echo $(($(date +%s) - 3600 * $1))
+}
+
+# Get Unix timestamp for yesterday
+yesterday() {
+  echo $(($(date +%s) - 86400))
+}
+
+# Convert Unix timestamp to human readable
+time-at() {
+  if [ -z "$1" ]; then
+    echo "Usage: time-at <unix_timestamp>"
+    return 1
+  fi
+  date -r "$1"
+}
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  # Flush DNS cache
+  flush-dns() {
+    sudo dscacheutil -flushcache
+    sudo killall -HUP mDNSResponder
+    echo "DNS cache flushed"
+  }
+
+  # Add SSH key to macOS keychain on shell start
+  ssh-add --apple-use-keychain ~/.ssh/id_ed25519 2>/dev/null
+
+  # Generate random MAC address (useful for wifi restrictions)
+  get-new-mac() {
+    echo "Generating new MAC address for en0..."
+    sudo /System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport -z && \
+    sudo ifconfig en0 ether "a0$(openssl rand -hex 5 | sed 's/\(.\{2\}\)/:\1/g')" && \
+    networksetup -detectnewhardware
+    echo "New MAC address applied"
+  }
+
+  # Quick access to airport utility
+  alias airport="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport"
+fi

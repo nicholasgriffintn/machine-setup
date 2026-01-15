@@ -41,3 +41,24 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=60'
 
 # Enable async prompt updates for better performance
 export POSH_GIT_ENABLED=true
+
+# rbenv initialization
+if command -v rbenv &>/dev/null; then
+  eval "$(rbenv init - zsh)"
+fi
+
+# fnm (Fast Node Manager) - faster alternative to nvm
+if command -v fnm &>/dev/null; then
+  eval "$(fnm env --use-on-cd)"
+fi
+
+# Atuin - better shell history with sync
+if command -v atuin &>/dev/null; then
+  eval "$(atuin init zsh)"
+fi
+
+# PATH deduplication - prevents PATH from growing on each reload
+trim_path() {
+  PATH=$(awk -F: '{for(i=1;i<=NF;i++){if(!($i in a)){a[$i];printf s$i;s=":"}}}'<<<"$PATH")
+  export PATH
+}

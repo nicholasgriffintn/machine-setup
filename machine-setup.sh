@@ -200,6 +200,19 @@ if [ -f "$SCRIPT_DIR/fastfetch-logo.txt" ]; then
     fi
 fi
 
+# Neovim configuration
+if [ -d "$SCRIPT_DIR/nvim" ]; then
+    mkdir -p "$HOME/.config/nvim"
+    ln -sf "$SCRIPT_DIR/nvim/init.lua" "$HOME/.config/nvim/init.lua"
+    log success "Linked nvim config"
+fi
+
+# Tmux configuration
+if [ -f "$SCRIPT_DIR/tmux.conf" ]; then
+    ln -sf "$SCRIPT_DIR/tmux.conf" "$HOME/.tmux.conf"
+    log success "Linked tmux.conf"
+fi
+
 if [ ! -d "$HOME/.cargo" ]; then
     spin "Installing Rust..." bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'
     . "$HOME/.cargo/env"

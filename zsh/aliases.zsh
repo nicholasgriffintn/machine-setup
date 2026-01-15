@@ -32,6 +32,10 @@ else
   alias ll='ls -lah'
   alias la='ls -A'
   alias l='ls -CF'
+  # Fallback tree alias when eza not available
+  if command -v tree &>/dev/null; then
+    alias lt='tree -L 2'
+  fi
 fi
 
 # Better cat with bat
@@ -39,6 +43,11 @@ if command -v bat &>/dev/null; then
   alias cat='bat --style=auto'
   alias catt='/bin/cat'  # Keep original cat available
   export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+fi
+
+# Better git diff with delta
+if command -v delta &>/dev/null; then
+  export GIT_PAGER='delta'
 fi
 
 # Directory navigation
@@ -95,6 +104,12 @@ fi
 alias py='python3'
 alias pip='pip3'
 
+# Neovim
+if command -v nvim &>/dev/null; then
+  alias vim='nvim'
+  alias vi='nvim'
+fi
+
 # Development shortcuts
 # Smart serve - uses soft-serve for git repos, python server for others
 if command -v soft &>/dev/null; then
@@ -124,13 +139,23 @@ alias prt='pnpm run test'
 alias zshrc='$EDITOR ~/.zshrc'
 alias reload='source ~/.zshrc'
 
+# Tmux
+if command -v tmux &>/dev/null; then
+  alias ta='tmux attach -t'
+  alias tl='tmux list-sessions'
+  alias tn='tmux new-session -s'
+  alias tk='tmux kill-session -t'
+fi
+
 if command -v lazygit &>/dev/null; then
   alias lg='lazygit'
 fi
 
+# System monitoring - prefer btop, fallback to htop
 if command -v btop &>/dev/null; then
   alias top='btop'
-  alias htop='btop'
+elif command -v htop &>/dev/null; then
+  alias top='htop'
 fi
 
 if command -v tlrc &>/dev/null; then
