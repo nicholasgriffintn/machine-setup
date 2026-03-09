@@ -2,3 +2,7 @@
 .claude
 ai-tooling/skills/skills-no-allowed-tools
 ai-tooling/skills/.system
+
+*.pyc
+.config/opencode/command
+.config/opencode/INSTRUCTIONS.md

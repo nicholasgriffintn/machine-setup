@@ -335,6 +335,7 @@ fi
 
 if [ "$UPDATE_MODE" != true ]; then
     if confirm "Apply macOS defaults (Finder, Dock, keyboard settings)?"; then
+        sudo -v
         spin "Applying macOS defaults..." bash "$SCRIPT_DIR/macos-defaults.sh"
     fi
 fi
