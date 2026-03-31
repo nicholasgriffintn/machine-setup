@@ -6,3 +6,5 @@ ai-tooling/skills/.system
 *.pyc
 .config/opencode/command
 .config/opencode/INSTRUCTIONS.md
+.pyc
+__pycache__

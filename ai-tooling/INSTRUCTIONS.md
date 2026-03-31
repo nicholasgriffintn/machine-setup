@@ -5,7 +5,9 @@ Central principles for agents, skills, and commands. Reference this file in your
 ## Code
 
 - leave codebases better than you found them. write maintainable code that's easy to understand - being clever doesn't win points.
-- don't build abstractions until they're needed. prefer inline code over unnecessary helper functions.
+- avoid speculative abstractions, but do not grow route/page files with feature internals.
+- if logic is non-trivial (state machine, parsing, measurement, timers, or >25–40 lines), extract it to a component/hook/lib module immediately.
+- route files should primarily orchestrate data loading and composition.
 - don't cast types to circumvent issues. fix them properly.
 - comments should explain the why, not the what. save them for logic with I/O, validation, or edge cases.
 - avoid introducing dependencies unless necessary and agreed upon. when you do, use the project's toolchain (npm, cargo, etc.) and include lockfiles in commits.

@@ -23,8 +23,6 @@ window-padding-x = 5
 window-padding-y = 0,10
 window-width = 350
 window-height = 472
-# Minimal chrome.
-window-decoration = none
 
 #
 # macOS Specific

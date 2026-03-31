@@ -34,9 +34,6 @@ def get_secret_patterns() -> Tuple[List[Tuple[str, str]], set]:
     """Get secret detection patterns."""
     patterns = [
         (r'(?i)(api[_-]?key|apikey)\s*[:=]\s*["\']?[a-zA-Z0-9_-]{20,}', 'API key'),
-        (r'(?i)(secret|password|passwd|pwd)\s*[:=]\s*["\'][^"\']+["\']', 'Password/Secret (quoted)'),
-        (r'(?i)(secret|password|passwd|pwd)\s*[:=]\s*[^"\'\s]{8,}', 'Password/Secret (unquoted)'),
-        (r'(?i)bearer\s+[a-zA-Z0-9_-]{20,}', 'Bearer token'),
         (r'ghp_[a-zA-Z0-9]{36}', 'GitHub Personal Access Token'),
         (r'github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}', 'GitHub PAT (fine-grained)'),
         (r'gho_[a-zA-Z0-9]{36}', 'GitHub OAuth Access Token'),
