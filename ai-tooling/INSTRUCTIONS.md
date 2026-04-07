@@ -2,61 +2,116 @@
 
 Central principles for agents, skills, and commands. Reference this file in your configurations.
 
+## Scope and Priority
+
+- These rules apply to every task in every repository.
+- Treat this file as a strict contract, not guidance.
+- When rules conflict, follow the stricter rule.
+- If a rule is ambiguous, choose the safest, most maintainable, least invasive interpretation.
+- Do not trade instruction compliance for speed.
+
+## Definition of Done (Hard Gate)
+
+A task is not complete unless all are true:
+
+- Code follows this contract and repo conventions.
+- No structural violations remain in changed files.
+- Relevant validation has run, or a blocker is stated explicitly.
+- Risks, assumptions, and follow-ups are stated briefly.
+
+## Required Final Response Format
+
+Every final response must include:
+
+- `Compliance:` pass/fail against this contract.
+- `Validation:` commands run and result.
+- `Residual risks:` none or short list.
+
+Keep the output concise and focused on these points. Do not include extraneous information.
+
 ## Code
 
-- leave codebases better than you found them. write maintainable code that's easy to understand - being clever doesn't win points.
-- avoid speculative abstractions, but do not grow route/page files with feature internals.
-- if logic is non-trivial (state machine, parsing, measurement, timers, or >25–40 lines), extract it to a component/hook/lib module immediately.
-- route files should primarily orchestrate data loading and composition.
-- don't cast types to circumvent issues. fix them properly.
-- comments should explain the why, not the what. save them for logic with I/O, validation, or edge cases.
-- avoid introducing dependencies unless necessary and agreed upon. when you do, use the project's toolchain (npm, cargo, etc.) and include lockfiles in commits.
-- be wary of security vulnerabilities - command injection, XSS, SQL injection, and other OWASP top 10 issues. if you spot insecure code, fix it immediately.
+- Leave codebases better than you found them.
+- Write maintainable code that is easy to understand.
+- Avoid speculative abstractions.
+- Do not grow route/page files with feature internals.
+- Route files should orchestrate data loading and composition.
+- If logic is non-trivial (state machine, parsing, measurement, timers, or >25–40 lines), extract it to a component/hook/lib module immediately.
+- Do not cast types to circumvent issues. Fix them properly.
+- Comments should explain why, not what.
+- Use comments sparingly for I/O, validation, and edge cases.
+- Avoid introducing dependencies unless necessary and agreed upon.
+- When adding dependencies, use the project toolchain and include lockfiles in commits.
 
-## Git
+## Shared Utilities
 
-- always create feature branches from the default branch. never commit directly to main.
-- do NOT commit, push, or create PRs without explicit instruction. prior approval doesn't carry forward.
-- keep commit messages short and use conventional commits: `feat(auth): add login endpoint`
-- use `gh` CLI for GitHub operations. it handles private repos better than WebFetch.
-- prefer squash merges to maintain clean history.
+- Treat reusable helper logic as shared by default, not inline.
+- Before writing any helper, search the repo for an existing utility and reuse it when possible.
+- Do not define generic utilities inside feature files, route files, or service files.
+- Generic helpers include serialisation, parsing, string/date/number helpers, type guards, validators, formatters, mappers, and error helpers.
+- Generic helpers must live in shared utility modules.
+- If an inline utility is introduced during a task, move it to a shared utility module in the same patch.
+- Treat violations of these rules as defects and fix them immediately.
+- If unsure whether logic is generic, treat it as generic and put it in shared utilities.
+
+## Security
+
+- Be wary of OWASP Top 10 issues.
+- If you spot insecure code, fix it immediately.
+- Pay particular attention to command injection, XSS, SQL injection, auth bypass, and insecure defaults.
 
 ## Testing
 
-- bias towards fewer tests that matter. focus on integration tests covering validation, state, and error handling.
-- avoid unit tests that simply verify language features work (e.g. testing object spread).
-- new code needs test coverage. edge cases and error paths should be tested.
-
-## Pull Requests
-
-- don't list files changed - the diff shows that.
-- follow this structure:
-  - short opening sentence describing the change
-  - explain the issue with concrete context
-  - (optional) real-world data or code demonstrating the problem
-  - bullet points showing major functional changes
-  - code snippet showing user-facing result (if applicable)
-  - brief mention of docs, tests as applicable
-- keep descriptions concise. use bullet points over prose where possible.
+- Bias toward fewer tests that matter.
+- Prefer integration tests that cover validation, state transitions, and error handling.
+- Avoid unit tests that only verify language features.
+- New code needs coverage.
+- Test edge cases and error paths.
 
 ## Communication
 
-- don't say "you're absolutely right" - just agree or disagree and continue.
-- be concise. avoid long walls of text.
-- present options when useful, but bring opinions. recommend Option B because of reasons x, y, z.
-- link to sources when appropriate, especially when asked for references.
+- Be concise.
+- Avoid long walls of text.
+- Present options when useful, but bring opinions.
+- Recommend a preferred option with reasons.
+- Link to sources when appropriate, especially when asked for references.
+- Do not use the phrase “you’re absolutely right”.
 
 ## Documentation
 
-- act as editor, not replacement author. when editing existing prose, retain the original voice and keep changes small.
-- use imperative mood: "Add the config" not "Adding the config"
-- lead with the problem before the solution.
-- keep paragraphs to 2-4 sentences max.
-- use "we" for collaboration, "you" to address the reader.
-- use bullet points over numbered lists unless order matters.
-- be direct and opinionated. acknowledge tradeoffs honestly.
-- use bold for key phrases that anchor arguments.
-- prefer British English unless the project has an existing convention.
-- avoid marketing speak: "perfect for", "empowers you to", "modernisation"
-- em-dashes are fine. semi-colons less so.
-- no emojis unless the user uses them first.
+- Act as editor, not replacement author.
+- When editing prose, retain original voice and keep changes small.
+- Use imperative mood.
+- Lead with the problem before the solution.
+- Keep paragraphs to 2–4 sentences.
+- Use “we” for collaboration and “you” for the reader.
+- Prefer bullet points over numbered lists unless order matters.
+- Be direct and opinionated.
+- Acknowledge trade-offs honestly.
+- Use bold for key anchor phrases.
+- Prefer British English unless the project has an existing convention.
+- Avoid marketing language.
+- Em-dashes are fine. Semicolons less so.
+- No emojis unless the user uses them first.
+
+## Git
+
+- Always create feature branches from the default branch.
+- Never commit directly to `main`.
+- Do not commit, push, or create PRs without explicit instruction.
+- Prior approval does not carry forward.
+- Keep commit messages short and use conventional commits.
+- Use `gh` CLI for GitHub operations.
+- Prefer squash merges to keep history clean.
+
+## Pull Requests
+
+- Do not list files changed.
+- Use this structure:
+- Short opening sentence describing the change.
+- Explain the issue with concrete context.
+- Optional real-world data or code demonstrating the problem.
+- Bullet points of major functional changes.
+- User-facing code snippet when applicable.
+- Brief mention of docs and tests when applicable.
+- Keep descriptions concise.
