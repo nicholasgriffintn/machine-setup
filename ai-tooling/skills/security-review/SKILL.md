@@ -1,11 +1,6 @@
 ---
 name: security-review
 description: A specialist skill for security reviews, threat modeling, and remediation guidance. Use for auth/permissions changes, secrets or PII handling, public endpoints, or dependency upgrades.
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
 ---
 
 # Security Review Skill

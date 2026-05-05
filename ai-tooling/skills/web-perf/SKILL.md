@@ -1,11 +1,6 @@
 ---
 name: web-perf
 description: Audits web performance using Chrome DevTools MCP. Measures Core Web Vitals, finds render-blocking resources, dependency chains, layout shifts, caching issues, and accessibility gaps. Use for audits, profiling, debugging, or optimising page load performance and Lighthouse scores.
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
 ---
 
 # Web Performance Skill
@@ -53,11 +48,13 @@ Audit Progress
 The problem is unknown page performance; capture a cold-load trace so you can diagnose it.
 
 1. Navigate to the target URL:
+
    ```
    navigate_page(url: "<target-url>")
    ```
 
 2. Start a performance trace with reload:
+
    ```
    performance_start_trace(autoStop: true, reload: true)
    ```
@@ -65,6 +62,7 @@ The problem is unknown page performance; capture a cold-load trace so you can di
 3. Wait for trace completion and capture the results.
 
 Troubleshooting:
+
 - If the trace is empty, confirm the page loaded via `navigate_page`.
 - If insight names do not match, inspect the trace response to list available insights.
 
@@ -74,20 +72,22 @@ Use `performance_analyze_insight` to extract key metrics. If an insight name fai
 
 Common insight names:
 
-| Metric | Insight Name | What to Look For |
-|--------|--------------|------------------|
-| LCP | `LCPBreakdown` | TTFB, resource load, render delay |
-| CLS | `CLSCulprits` | Images without dimensions, injected content, font swaps |
-| Render Blocking | `RenderBlocking` | CSS/JS blocking first paint |
-| Document Latency | `DocumentLatency` | Server response time issues |
-| Network Dependencies | `NetworkRequestsDepGraph` | Chains delaying critical resources |
+| Metric               | Insight Name              | What to Look For                                        |
+| -------------------- | ------------------------- | ------------------------------------------------------- |
+| LCP                  | `LCPBreakdown`            | TTFB, resource load, render delay                       |
+| CLS                  | `CLSCulprits`             | Images without dimensions, injected content, font swaps |
+| Render Blocking      | `RenderBlocking`          | CSS/JS blocking first paint                             |
+| Document Latency     | `DocumentLatency`         | Server response time issues                             |
+| Network Dependencies | `NetworkRequestsDepGraph` | Chains delaying critical resources                      |
 
 Example:
+
 ```
 performance_analyze_insight(insightSetId: "<id-from-trace>", insightName: "LCPBreakdown")
 ```
 
 Key thresholds (good/needs-improvement/poor):
+
 - TTFB: < 800ms / < 1.8s / > 1.8s
 - FCP: < 1.8s / < 3s / > 3s
 - LCP: < 2.5s / < 4s / > 4s
@@ -99,6 +99,7 @@ Key thresholds (good/needs-improvement/poor):
 ### Phase 3: Network Analysis
 
 List requests to identify optimisation opportunities:
+
 ```
 list_network_requests(resourceTypes: ["Script", "Stylesheet", "Document", "Font", "Image"])
 ```
@@ -113,6 +114,7 @@ Look for:
 6. **Unused preconnects**: confirm zero requests to the origin before removal.
 
 For details:
+
 ```
 get_network_request(reqid: <id>)
 ```
@@ -120,11 +122,13 @@ get_network_request(reqid: <id>)
 ### Phase 4: Accessibility Snapshot
 
 Take an accessibility tree snapshot:
+
 ```
 take_snapshot(verbose: true)
 ```
 
 Flag high-level gaps:
+
 - Missing or duplicate ARIA IDs.
 - Poor contrast ratios (WCAG AA: 4.5:1 normal text, 3:1 large text).
 - Focus traps or missing focus indicators.
@@ -136,36 +140,40 @@ Skip if auditing a third-party site without codebase access.
 
 Detect the stack by searching for config files:
 
-| Tool | Config Files |
-|------|--------------|
-| Webpack | `webpack.config.js`, `webpack.*.js` |
-| Vite | `vite.config.js`, `vite.config.ts` |
-| Rollup | `rollup.config.js`, `rollup.config.mjs` |
-| esbuild | `esbuild.config.js`, build scripts with `esbuild` |
-| Parcel | `.parcelrc`, `package.json` (parcel field) |
-| Next.js | `next.config.js`, `next.config.mjs` |
-| Nuxt | `nuxt.config.js`, `nuxt.config.ts` |
-| SvelteKit | `svelte.config.js` |
-| Astro | `astro.config.mjs` |
+| Tool      | Config Files                                      |
+| --------- | ------------------------------------------------- |
+| Webpack   | `webpack.config.js`, `webpack.*.js`               |
+| Vite      | `vite.config.js`, `vite.config.ts`                |
+| Rollup    | `rollup.config.js`, `rollup.config.mjs`           |
+| esbuild   | `esbuild.config.js`, build scripts with `esbuild` |
+| Parcel    | `.parcelrc`, `package.json` (parcel field)        |
+| Next.js   | `next.config.js`, `next.config.mjs`               |
+| Nuxt      | `nuxt.config.js`, `nuxt.config.ts`                |
+| SvelteKit | `svelte.config.js`                                |
+| Astro     | `astro.config.mjs`                                |
 
 Also check `package.json` for framework dependencies and build scripts.
 
 Tree-shaking and dead code:
+
 - **Webpack**: confirm `mode: "production"`, `sideEffects`, and `usedExports`.
 - **Vite/Rollup**: tree-shaking is default; check `treeshake` options.
 - Watch for barrel files and large libraries imported wholesale.
 
 Unused JS/CSS:
+
 - Check for CSS-in-JS versus static extraction.
 - Look for PurgeCSS/UnCSS, or Tailwind `content` config.
 - Identify dynamic imports versus eager loading.
 
 Polyfills:
+
 - Check `@babel/preset-env` targets and `useBuiltIns`.
 - Look for oversized `core-js` imports.
 - Verify `browserslist` is not overly broad.
 
 Compression and minification:
+
 - Check for `terser`, `esbuild`, or `swc` minification.
 - Verify gzip/brotli compression in server config.
 - Confirm source maps are external or disabled in production.

@@ -1,11 +1,6 @@
 ---
 name: backend-design
 description: Design robust backend systems and APIs. Use when users ask to plan or implement services, data models, or integrations.
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
 ---
 
 # Backend Design Skill

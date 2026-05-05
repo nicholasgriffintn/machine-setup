@@ -1,11 +1,6 @@
 ---
 name: git-workflow
 description: A skill that outlines best practices for using Git in a collaborative development environment, including branching strategies, commit conventions, and pull request workflows.
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
 ---
 
 # Git Workflow Skill

@@ -1,0 +1,1 @@
+> NOTE: This is a fork from https://github.com/vercel-labs/agent-skills, the reason for this is to provide these react skills without having to trust a third party with the installation or maintenance of the skills. You will need to manually update the rules in this repo when they update.
