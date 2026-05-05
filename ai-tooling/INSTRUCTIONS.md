@@ -2,33 +2,6 @@
 
 Central principles for agents, skills, and commands. Reference this file in your configurations.
 
-## Scope and Priority
-
-- These rules apply to every task in every repository.
-- Treat this file as a strict contract, not guidance.
-- When rules conflict, follow the stricter rule.
-- If a rule is ambiguous, choose the safest, most maintainable, least invasive interpretation.
-- Do not trade instruction compliance for speed.
-
-## Definition of Done (Hard Gate)
-
-A task is not complete unless all are true:
-
-- Code follows this contract and repo conventions.
-- No structural violations remain in changed files.
-- Relevant validation has run, or a blocker is stated explicitly.
-- Risks, assumptions, and follow-ups are stated briefly.
-
-## Required Final Response Format
-
-Every final response must include:
-
-- `Compliance:` pass/fail against this contract.
-- `Validation:` commands run and result.
-- `Residual risks:` none or short list.
-
-Keep the output concise and focused on these points. Do not include extraneous information.
-
 ## Code
 
 - Leave codebases better than you found them.
@@ -115,3 +88,30 @@ Keep the output concise and focused on these points. Do not include extraneous i
 - User-facing code snippet when applicable.
 - Brief mention of docs and tests when applicable.
 - Keep descriptions concise.
+
+## Scope and Priority
+
+- These rules apply to every task in every repository.
+- Treat this file as a strict contract, not guidance.
+- When rules conflict, follow the stricter rule.
+- If a rule is ambiguous, choose the safest, most maintainable, least invasive interpretation.
+- Do not trade instruction compliance for speed.
+
+## Definition of Done (Hard Gate)
+
+A task is not complete unless all are true:
+
+- Code follows this contract and repo conventions.
+- No structural violations remain in changed files.
+- Relevant validation has run, or a blocker is stated explicitly.
+- Risks, assumptions, and follow-ups are stated briefly.
+
+## Required Final Response Format
+
+Every final response must include:
+
+- `Compliance:` pass/fail against this contract.
+- `Validation:` commands run and result.
+- `Residual risks:` none or short list.
+
+Keep the output concise and focused on these points. Do not include extraneous information.
