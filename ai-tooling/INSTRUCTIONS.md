@@ -40,6 +40,13 @@ Central principles for agents, skills, and commands. Reference this file in your
 - Avoid unit tests that only verify language features.
 - New code needs coverage.
 - Test edge cases and error paths.
+- Do not start dev servers for routine validation.
+- Prefer static checks, typechecks, builds, and test commands over live-server smoke tests.
+- Start a dev server only when the user explicitly asks, the task is specifically about runtime browser behaviour that cannot be validated another way, or the repo instructions require it.
+- Before starting a dev server, state why it is necessary and use the documented project command exactly.
+- Do not add ad hoc server flags, alternate hosts, alternate ports, or browser automation workarounds unless the user asks for them.
+- If a dev server cannot start cleanly, stop and report the blocker instead of trying workaround starts.
+- Stop any dev server you start before finishing the task.
 
 ## Communication
 
@@ -69,12 +76,11 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Git
 
-- Always create feature branches from the default branch.
-- Never commit directly to `main`.
 - Do not commit, push, or create PRs without explicit instruction.
 - Prior approval does not carry forward.
 - Keep commit messages short and use conventional commits.
 - Use `gh` CLI for GitHub operations.
+- Only when explicitly asked to perform write operations on a repository ensure that you create a new branch and do not commit directly to `main`. If the user has not asked to create a branch or manage commits, do not perform any Git operations. You only have read permission without the user's explicit instruction to write.
 - Prefer squash merges to keep history clean.
 
 ## Pull Requests
