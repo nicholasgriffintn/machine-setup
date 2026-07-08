@@ -32,29 +32,34 @@ path=(
 # 2. Initialize Completion
 #
 autoload -Uz compinit
-# Check if dump file is older than 24h, if so regenerate
-if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
-  compinit
+# Check if dump file is older than 24h, if so regenerate.
+zcompdump="${ZDOTDIR:-$HOME}/.zcompdump"
+if [[ ! -f "$zcompdump" || -n "$zcompdump"(#qN.mh+24) ]]; then
+  compinit -d "$zcompdump"
 else
-  compinit -C
+  compinit -C -d "$zcompdump"
 fi
+unset zcompdump
 
 #
 # 3. Antidote Plugin Manager
 #
 # Determine Homebrew prefix
-if [[ -d /opt/homebrew ]]; then
+if command -v brew &>/dev/null; then
+  BREW_PREFIX="$(brew --prefix)"
+elif [[ -d /opt/homebrew ]]; then
   BREW_PREFIX="/opt/homebrew"
 else
   BREW_PREFIX="/usr/local"
 fi
 
 # Load Antidote
-if [[ -f "$BREW_PREFIX/opt/antidote/share/antidote/antidote.zsh" ]]; then
+if [[ -f "$BREW_PREFIX/opt/antidote/share/antidote/antidote.zsh" && -f "${ZDOTDIR:-$HOME}/.zsh_plugins.txt" ]]; then
   source "$BREW_PREFIX/opt/antidote/share/antidote/antidote.zsh"
   # Initialize plugins statically for speed
-  antidote load ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
+  antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
 fi
+unset BREW_PREFIX
 
 #
 # 4. Functions, Aliases, Bindings (Post-Plugin)
@@ -80,7 +85,9 @@ fi
 
 # FZF
 if command -v fzf &>/dev/null; then
-  eval "$(fzf --zsh)"
+  # fzf restores the read-only zle option on reload in some zsh contexts; keep
+  # `source ~/.zshrc` quiet while still installing the widgets/keybindings.
+  eval "$(fzf --zsh)" 2>/dev/null
   
   if command -v fd &>/dev/null; then
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
@@ -107,22 +114,21 @@ fi
 #
 # Theme (Oh My Posh)
 #
-if command -v oh-my-posh &>/dev/null; then
-  eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin.omp.json)"
+if command -v oh-my-posh &>/dev/null && command -v brew &>/dev/null; then
+  OMP_CONFIG="$(brew --prefix oh-my-posh 2>/dev/null)/themes/catppuccin.omp.json"
+  if [[ -f "$OMP_CONFIG" ]]; then
+    eval "$(oh-my-posh init zsh --config "$OMP_CONFIG")"
+  fi
+  unset OMP_CONFIG
 fi
-source ~/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh
+[[ -f "$HOME/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]] && source "$HOME/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh"
 
 #
 # Startup Info
 #
-if [[ -z $FASTFETCH_SHOWN ]]; then
-  fastfetch --config ~/workspace/fastfetch-config.jsonc
+if [[ -z $FASTFETCH_SHOWN ]] && command -v fastfetch &>/dev/null && [[ -f "$HOME/workspace/fastfetch-config.jsonc" ]]; then
+  fastfetch --config "$HOME/workspace/fastfetch-config.jsonc"
   export FASTFETCH_SHOWN=1
 fi
-
-# Clean up stray background jobs
-precmd() {
-  jobs -pr
-}
 
 # zprof

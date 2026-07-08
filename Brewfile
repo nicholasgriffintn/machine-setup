@@ -62,6 +62,7 @@ brew "httpie"
 cask "font-fantasque-sans-mono-nerd-font"
 cask "font-meslo-lg-nerd-font"
 cask "font-fira-code"
+cask "ghostty" unless system "test -e /Applications/Ghostty.app"
 
 cask "gpg-suite" unless system "test -e /Applications/GPG\\ Keychain.app"
 cask "obsidian" unless system "test -e /Applications/Obsidian.app"

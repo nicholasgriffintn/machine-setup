@@ -21,7 +21,9 @@ export PAGER='less'
 export HOMEBREW_NO_AUTO_UPDATE=1
 
 # Fix GPG https://github.com/keybase/keybase-issues/issues/2798
-export GPG_TTY=$(tty)
+if tty -s; then
+  export GPG_TTY="$(tty)"
+fi
 
 # Colored Man Pages
 export LESS_TERMCAP_mb=$'\e[1;32m'
@@ -46,19 +48,3 @@ export POSH_GIT_ENABLED=true
 if command -v rbenv &>/dev/null; then
   eval "$(rbenv init - zsh)"
 fi
-
-# fnm (Fast Node Manager) - faster alternative to nvm
-if command -v fnm &>/dev/null; then
-  eval "$(fnm env --use-on-cd)"
-fi
-
-# Atuin - better shell history with sync
-if command -v atuin &>/dev/null; then
-  eval "$(atuin init zsh)"
-fi
-
-# PATH deduplication - prevents PATH from growing on each reload
-trim_path() {
-  PATH=$(awk -F: '{for(i=1;i<=NF;i++){if(!($i in a)){a[$i];printf s$i;s=":"}}}'<<<"$PATH")
-  export PATH
-}

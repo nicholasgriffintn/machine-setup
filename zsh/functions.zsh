@@ -40,7 +40,13 @@ killport() {
     echo "Usage: killport <port_number>"
     return 1
   fi
-  kill -9 $(lsof -ti:$1)
+  local pids
+  pids=$(lsof -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null)
+  if [[ -z "$pids" ]]; then
+    echo "No listener found on port $1"
+    return 1
+  fi
+  kill $pids
 }
 
 # Git worktree helpers

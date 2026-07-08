@@ -172,9 +172,9 @@ fi
 
 # Better man pages with tldr
 man() {
-  if command -v tlrc &>/dev/null; then
-    tlrc "$1" 2>/dev/null || command man "$1"
+  if [[ $# -eq 1 ]] && command -v tlrc &>/dev/null; then
+    tlrc "$1" 2>/dev/null || command man "$@"
   else
-    command man "$1"
+    command man "$@"
   fi
 }

@@ -6,46 +6,23 @@
 # Theme & Appearance
 #
 theme = catppuccin-mocha.conf
-
-#
-# Font Settings
-#
-font-family = TX-02
+font-family = FantasqueSansM Nerd Font Mono
 font-size = 15
-# Thicker fonts for better readability.
 font-thicken = true
-
-#
-# Window Settings
-#
 window-padding-balance = true
 window-padding-x = 5
 window-padding-y = 0,10
 window-width = 350
 window-height = 472
-
-#
-# macOS Specific
-#
-# Use option as alt for terminal sequences.
-macos-option-as-alt = true
-# Cleaner look without titlebar.
-macos-titlebar-style = hidden
-
-#
-# Cursor
-#
-# Beam cursor to match zsh vi mode.
 cursor-style = bar
-# No blinking.
 cursor-style-blink = false
+window-show-tab-bar = "always"
 
 #
 # Mouse & Clipboard
 #
 mouse-hide-while-typing = true
 copy-on-select = true
-# Warn on potentially dangerous pastes.
 clipboard-paste-protection = true
 
 #
@@ -61,7 +38,6 @@ link-url = true
 #
 # Scrollback
 #
-# Match zsh HISTSIZE.
 scrollback-limit = 50000
 
 #
@@ -74,3 +50,6 @@ auto-update-channel = tip
 # Keybindings
 #
 keybind = shift+enter=text:\n
+
+#
+working-directory = ~/workspace

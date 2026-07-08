@@ -2,6 +2,8 @@
 # Vi Mode with Enhancements
 #
 
+[[ -o interactive ]] || return
+
 bindkey -v
 
 # Fix backspace in vi mode
@@ -42,11 +44,15 @@ function zle-line-init {
 zle -N zle-line-init
 
 # History Substring Search (bind after plugins load)
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey -M vicmd 'k' history-substring-search-up
-bindkey -M vicmd 'j' history-substring-search-down
+if (( $+widgets[history-substring-search-up] && $+widgets[history-substring-search-down] )); then
+  bindkey '^[[A' history-substring-search-up
+  bindkey '^[[B' history-substring-search-down
+  bindkey -M vicmd 'k' history-substring-search-up
+  bindkey -M vicmd 'j' history-substring-search-down
+fi
 
 # Magic Enter (bind last to ensure it's not overridden)
-zle -N magic-enter
-bindkey "^M" magic-enter
+if (( $+functions[magic-enter] )); then
+  zle -N magic-enter
+  bindkey "^M" magic-enter
+fi
