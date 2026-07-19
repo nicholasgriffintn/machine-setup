@@ -76,11 +76,10 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Git
 
-- Do not commit, push, or create PRs without explicit instruction.
-- Prior approval does not carry forward.
+- Do not commit, push, or create PRs without explicit instruction. YOU ONLY HAVE READ ACCESS AT ALL TIMES UNLESS EXPLICITLY INSTRUCTED OTHERWISE, EXPLICITLY MEANS A LITERAL INSTRUCTION, IE. “Commit and push your changes to the repo.” NOTHING ELSE COUNTS.
+- Prior approval does not carry forward. DO NOT INFER PERMISSION FROM PAST TASKS.
 - Keep commit messages short and use conventional commits.
 - Use `gh` CLI for GitHub operations.
-- Only when explicitly asked to perform write operations on a repository ensure that you create a new branch and do not commit directly to `main`. If the user has not asked to create a branch or manage commits, do not perform any Git operations. You only have read permission without the user's explicit instruction to write.
 - Prefer squash merges to keep history clean.
 
 ## Pull Requests
