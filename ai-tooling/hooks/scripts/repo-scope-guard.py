@@ -308,10 +308,67 @@ def find_gh_violation(args, cwd: str, allowed_owners):
     return None
 
 
+def find_matching_paren(text: str, open_idx: int):
+    """`open_idx` is the index of an opening '(' in `text`. Returns the index
+    of its matching ')' (accounting for nesting), or None if unbalanced."""
+    depth = 1
+    i = open_idx + 1
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == '(':
+            depth += 1
+        elif c == ')':
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return None
+
+
+def extract_nested_payloads(command: str):
+    """Pull out string payloads that a shell would itself execute as a
+    command: $(...) / `...` substitutions and (...) subshell groups. Plain
+    token-splitting never sees inside these, so a wrapped `git`/`gh` call
+    (subshell, command substitution) would otherwise be invisible to the
+    scope check."""
+    payloads = []
+    i = 0
+    n = len(command)
+    while i < n:
+        if command.startswith('$(', i):
+            end = find_matching_paren(command, i + 1)
+            if end is not None:
+                payloads.append(command[i + 2:end])
+                i = end + 1
+                continue
+        elif command[i] == '`':
+            end = command.find('`', i + 1)
+            if end != -1:
+                payloads.append(command[i + 1:end])
+                i = end + 1
+                continue
+        elif command[i] == '(':
+            end = find_matching_paren(command, i)
+            if end is not None:
+                payloads.append(command[i + 1:end])
+                i = end + 1
+                continue
+        i += 1
+    return payloads
+
+
 def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0):
     """Return a human-readable violation reason, or None if the command is fine."""
     if _depth > MAX_RECURSION_DEPTH:
+        # Pathological/adversarial nesting -- fail closed rather than recurse forever.
         return "command nesting too deep to analyze safely"
+
+    for payload in extract_nested_payloads(command):
+        if 'git' in payload or 'gh' in payload:
+            reason = find_scope_violation(payload, cwd, allowed_owners, _depth + 1)
+            if reason:
+                return reason
 
     for raw_segment in SEGMENT_SPLIT_RE.split(command):
         segment = raw_segment.strip()
@@ -355,6 +412,27 @@ def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0
                     )
                     if reason:
                         return reason
+            continue
+
+        if basename == 'eval':
+            nested = ' '.join(tokens[1:])
+            if nested:
+                reason = find_scope_violation(nested, cwd, allowed_owners, _depth + 1)
+                if reason:
+                    return reason
+            continue
+
+        if basename == 'xargs':
+            # xargs appends arguments supplied at runtime (via stdin), so the
+            # effective git/gh invocation can't be reconstructed statically --
+            # fail closed instead of silently letting it through.
+            inner = [t for t in tokens[1:] if not t.startswith('-')]
+            wrapped = next((t for t in inner if t in ('git', 'gh')), None)
+            if wrapped:
+                return (
+                    f"xargs invokes '{wrapped}' with arguments supplied at "
+                    "runtime, which can't be safety-checked"
+                )
             continue
 
         if basename == 'git':
