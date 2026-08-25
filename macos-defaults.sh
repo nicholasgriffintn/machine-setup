@@ -3,9 +3,10 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "$SCRIPT_DIR/lib/gum-utils.sh"
 
-# Close any open System Preferences panes, to prevent them from overriding
-# settings we’re about to change
-osascript -e 'tell application "System Preferences" to quit'
+# Close any open System Settings panes, to prevent them from overriding
+# settings we’re about to change (renamed from "System Preferences" in
+# macOS Ventura/13)
+osascript -e 'tell application "System Settings" to quit' 2>/dev/null || true
 
 log info "Setting macOS defaults..."
 

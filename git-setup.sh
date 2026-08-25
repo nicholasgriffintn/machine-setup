@@ -44,7 +44,10 @@ echo
 spin "Installing gpg-suite..." brew install --cask gpg-suite
 echo
 
-EXISTING_KEY=$(gpg --list-secret-keys --with-colons "$GIT_EMAIL" 2>/dev/null | grep "^sec:u:" | cut -f5 -d":" | head -n 1)
+# `gpg --list-secret-keys` exits non-zero when no key matches -- the normal
+# case on a fresh machine -- which would otherwise abort the script here
+# under `set -euo pipefail` before ever reaching the key-generation branch.
+EXISTING_KEY=$(gpg --list-secret-keys --with-colons "$GIT_EMAIL" 2>/dev/null | grep "^sec:u:" | cut -f5 -d":" | head -n 1 || true)
 
 if [ -n "$EXISTING_KEY" ]; then
     log success "GPG key already exists for $GIT_EMAIL"
