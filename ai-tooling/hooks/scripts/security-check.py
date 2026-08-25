@@ -26,6 +26,19 @@ class SecurityCheckHook(BaseHook):
         self.security_reminders = get_security_reminders()
 
     def execute(self) -> int:
+        # Fails CLOSED on an unexpected internal error (blocks rather than
+        # silently allowing the edit through), unlike BaseHook's default
+        # fail-open handling -- a secret-scanner that fails open on its own
+        # bugs isn't a scanner.
+        try:
+            return self._check()
+        except Exception as exc:
+            self.log_error(f"ERROR: {type(exc).__name__}: {exc}")
+            print(f"🚫 BLOCKED - security-check failed to analyze this edit safely: {exc}")
+            print("This edit has been BLOCKED because the security check could not run.")
+            return 2
+
+    def _check(self) -> int:
         file_path = self.get_file_path()
         content = self.get_content()
 

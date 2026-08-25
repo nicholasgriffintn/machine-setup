@@ -23,6 +23,19 @@ class ProtectFilesHook(BaseHook):
         self.blocked_patterns, self.warn_patterns = get_protected_patterns()
 
     def execute(self) -> int:
+        # Fails CLOSED on an unexpected internal error (blocks rather than
+        # silently allowing the edit through), unlike BaseHook's default
+        # fail-open handling -- a guard that fails open on its own bugs
+        # isn't a guard.
+        try:
+            return self._check()
+        except Exception as exc:
+            self.log_error(f"ERROR: {type(exc).__name__}: {exc}")
+            print(f"🚫 BLOCKED - protect-files failed to analyze this edit safely: {exc}")
+            print("This edit has been BLOCKED because the file-protection check could not run.")
+            return 2
+
+    def _check(self) -> int:
         file_path = self.get_file_path()
 
         if not file_path:
