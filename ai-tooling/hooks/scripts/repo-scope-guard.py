@@ -14,6 +14,7 @@ Fails CLOSED on an unexpected internal error (blocks rather than silently
 allowing the command through), unlike BaseHook's default fail-open handling,
 since a guard that fails open on its own bugs isn't a guard.
 """
+import os
 import re
 import shlex
 import subprocess
@@ -25,6 +26,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
 from config import get_allowed_git_owners  # noqa: E402
 
 SEGMENT_SPLIT_RE = re.compile(r'&&|\|\||[;|\n]')
+# Strip subshell/brace-group/command-substitution wrapping (e.g. `(git ...)`,
+# `{ git ...; }`, `` `git ...` ``, `$(git ...)`) from segment boundaries so
+# wrapped invocations still surface `git`/`gh` as the first token instead of
+# silently skipping scope checks. Only the outer boundary is touched, so this
+# never reaches into quoted arguments (e.g. a commit message like "fix (bug)").
+LEADING_WRAP_RE = re.compile(r'^[(){}$`]+\s*')
+TRAILING_WRAP_RE = re.compile(r'\s*[(){}`]+$')
 GITHUB_HOST_RE = re.compile(
     r'^(?:https?://|ssh://)?(?:[^@/]+@)?github\.com[:/]+([^/]+)/', re.IGNORECASE
 )
@@ -234,13 +242,17 @@ def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0
 
     for raw_segment in SEGMENT_SPLIT_RE.split(command):
         segment = raw_segment.strip()
+        segment = LEADING_WRAP_RE.sub('', segment)
+        segment = TRAILING_WRAP_RE.sub('', segment)
         if not segment or ('git' not in segment and 'gh' not in segment):
             continue
 
-        try:
-            tokens = shlex.split(segment)
-        except ValueError:
-            continue
+        # No try/except here: a malformed segment (e.g. the wrap-stripping
+        # above turning an escaped trailing `foo\)` into a dangling `foo\`)
+        # must fail closed via main()'s catch-all, not be silently skipped
+        # -- catching and continuing here is exactly the fail-open bug that
+        # let a segment shlex can't parse slip through unscoped.
+        tokens = shlex.split(segment)
 
         tokens = strip_env_assignments(tokens)
         if not tokens:
