@@ -8,7 +8,7 @@ A simple set of scripts to install commonly used dependencies on my machines, th
 
 ```bash
 # Clone this repository
-git clone https://github.com/nicholasgriffin/machine-setup.git
+git clone https://github.com/nicholasgriffintn/machine-setup.git
 cd machine-setup
 
 # Install gum if you don't have it already
