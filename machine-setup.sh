@@ -283,10 +283,12 @@ if [ -d "$SCRIPT_DIR/ai-tooling" ]; then
     bash "$SCRIPT_DIR/ai-tooling/scripts/sync-symlinks.sh"
 fi
 
-# Matches only a non-empty value, so a blank App ID submitted below doesn't
-# permanently skip this block on every future run.
-GITHUB_APP_ID_SET_RE='"GITHUB_APP_ID"[[:space:]]*:[[:space:]]*"[^"]'
-if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! grep -qE "$GITHUB_APP_ID_SET_RE" "$SCRIPT_DIR/ai-tooling/claude-settings.json"; then
+# claude-settings.json is git-tracked, so a fresh clone already carries
+# whoever last committed it's App ID and key *path* -- checking presence
+# alone would skip this prompt even though the private key was never
+# copied to this machine. check-bot-identity-configured.py also confirms
+# that key file actually exists locally before treating it as done.
+if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! python3 "$SCRIPT_DIR/ai-tooling/scripts/check-bot-identity-configured.py"; then
     log_banner rounded \
         "GitHub App bot identity (Nicholas' Clanker)" \
         "" \
