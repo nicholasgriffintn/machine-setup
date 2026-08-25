@@ -247,10 +247,12 @@ def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0
         if not segment or ('git' not in segment and 'gh' not in segment):
             continue
 
-        try:
-            tokens = shlex.split(segment)
-        except ValueError:
-            continue
+        # No try/except here: a malformed segment (e.g. the wrap-stripping
+        # above turning an escaped trailing `foo\)` into a dangling `foo\`)
+        # must fail closed via main()'s catch-all, not be silently skipped
+        # -- catching and continuing here is exactly the fail-open bug that
+        # let a segment shlex can't parse slip through unscoped.
+        tokens = shlex.split(segment)
 
         tokens = strip_env_assignments(tokens)
         if not tokens:
