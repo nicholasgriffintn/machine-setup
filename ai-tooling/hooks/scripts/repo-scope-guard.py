@@ -37,6 +37,29 @@ GH_SAFE_SUBCOMMANDS = {
 GH_REPO_TARGET_ACTIONS = {
     'clone', 'view', 'fork', 'delete', 'rename', 'archive', 'unarchive', 'edit', 'sync',
 }
+# `gh api` flags that consume the following token as their value, so that
+# value isn't mistaken for the API path positional (e.g. `gh api -X POST repos/...`).
+GH_API_VALUE_FLAGS = {
+    '-X', '--method', '-H', '--header', '-F', '--field', '-f', '--raw-field',
+    '--input', '--hostname', '-q', '--jq', '-t', '--template', '--cache',
+}
+
+
+def gh_api_positionals(args):
+    """Positional args for `gh api`, skipping flags and the values they consume."""
+    positionals = []
+    i = 0
+    while i < len(args):
+        tok = args[i]
+        if tok.startswith('-'):
+            if tok in GH_API_VALUE_FLAGS and '=' not in tok and i + 1 < len(args):
+                i += 2
+            else:
+                i += 1
+        else:
+            positionals.append(tok)
+            i += 1
+    return positionals
 
 
 def owner_from_github_url(url: str):
@@ -187,7 +210,8 @@ def find_gh_violation(args, cwd: str, allowed_owners):
         return None
 
     if subcommand == 'api':
-        path = positionals[0] if positionals else None
+        api_positionals = gh_api_positionals(rest)
+        path = api_positionals[0] if api_positionals else None
         if path:
             match = API_REPOS_PATH_RE.search(path)
             if match:
