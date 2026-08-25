@@ -76,7 +76,8 @@ if [ -f "$HOME/.codex/config.toml" ]; then
     python3 "$AI_TOOLING_DIR/scripts/sync-codex-env.py"
 fi
 
-GITHUB_APP_SETTINGS_KEY='"GITHUB_APP_ID"'
-if grep -q "$GITHUB_APP_SETTINGS_KEY" "$AI_TOOLING_DIR/claude-settings.json" 2>/dev/null; then
+# Matches only a non-empty value -- see the matching check in machine-setup.sh
+GITHUB_APP_ID_SET_RE='"GITHUB_APP_ID"[[:space:]]*:[[:space:]]*"[^"]'
+if grep -qE "$GITHUB_APP_ID_SET_RE" "$AI_TOOLING_DIR/claude-settings.json" 2>/dev/null; then
     bash "$AI_TOOLING_DIR/scripts/install-gh-token-refresher.sh"
 fi

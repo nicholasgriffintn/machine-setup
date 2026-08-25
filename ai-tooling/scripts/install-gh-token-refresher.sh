@@ -6,6 +6,11 @@ LABEL="com.nicholasgriffin.machine-setup.refresh-gh-token"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG_DIR="$HOME/Library/Logs/machine-setup"
 PYTHON3="$(command -v python3)"
+# launchd jobs get a minimal default environment -- refresh-gh-token.py and
+# github-app-token.py shell out to bare `python3`/`openssl`/`git`, which
+# would fail to resolve without this, independent of the absolute path used
+# for the job's own program below.
+JOB_PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 mkdir -p "$LOG_DIR"
 
@@ -25,6 +30,11 @@ cat > "$PLIST" <<EOF
   <integer>1800</integer>
   <key>RunAtLoad</key>
   <true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>$JOB_PATH</string>
+  </dict>
   <key>StandardOutPath</key>
   <string>$LOG_DIR/refresh-gh-token.log</string>
   <key>StandardErrorPath</key>

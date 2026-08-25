@@ -5,10 +5,14 @@ set -euo pipefail
 LOG_FILE="$HOME/machine-setup.log"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Logging wrapper - re-exec with script if not already logging
+# Logging wrapper - re-exec with script if not already logging.
+# Uses BASH_SOURCE (this file), not $0: setup.sh sources this script, so
+# $0 there is setup.sh itself -- re-exec'ing "$0" would restart setup.sh
+# from scratch instead of just this script, running the chsh check and
+# the "Configuring Machine..." banner twice.
 if [ -z "${MACHINE_SETUP_LOGGING:-}" ]; then
     export MACHINE_SETUP_LOGGING=1
-    script -q "$LOG_FILE" bash "$0" "$@"
+    script -q "$LOG_FILE" bash "${BASH_SOURCE[0]}" "$@"
     exit $?
 fi
 
@@ -17,9 +21,14 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 source "$SCRIPT_DIR/lib/gum-utils.sh"
 
-# Detect update mode
+# Detect update mode -- explicit `--update` skips the interactive prompt
+# (e.g. when re-running non-interactively, or from another script)
 UPDATE_MODE=false
-if [ -f "$HOME/.zshrc" ] && grep -q "oh-my-posh" "$HOME/.zshrc" 2>/dev/null; then
+if [ "${1:-}" = "--update" ]; then
+    UPDATE_MODE=true
+    log info "Running in UPDATE mode (--update)"
+    echo
+elif [ -f "$HOME/.zshrc" ] && grep -q "oh-my-posh" "$HOME/.zshrc" 2>/dev/null; then
     log_banner rounded "Existing setup detected!" "This appears to be a machine that has already been set up."
 
     if confirm "Run in UPDATE mode? (won't overwrite configs)"; then
@@ -127,11 +136,16 @@ install_mas_app() {
     if echo "$installed_apps" | grep -q "^$app_id$"; then
         log success "  $app_name already installed"
     else
-        spin "  Installing $app_name..." mas install "$app_id"
+        spin "  Installing $app_name..." mas install "$app_id" || log warn "  Failed to install $app_name (not signed into the App Store?), continuing"
     fi
 }
 
-INSTALLED_APPS=$(mas list | awk '{print $1}')
+# mas list fails if the user isn't signed into the App Store yet -- don't
+# let that abort the rest of setup under set -e.
+INSTALLED_APPS=$(mas list 2>/dev/null | awk '{print $1}') || {
+    log warn "mas list failed (not signed into the App Store?) -- skipping Mac App Store installs"
+    INSTALLED_APPS=""
+}
 
 if $HAS_GUM; then
     log info "Select Mac App Store applications to install:"
@@ -269,8 +283,10 @@ if [ -d "$SCRIPT_DIR/ai-tooling" ]; then
     bash "$SCRIPT_DIR/ai-tooling/scripts/sync-symlinks.sh"
 fi
 
-GITHUB_APP_SETTINGS_KEY='"GITHUB_APP_ID"'
-if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! grep -q "$GITHUB_APP_SETTINGS_KEY" "$SCRIPT_DIR/ai-tooling/claude-settings.json"; then
+# Matches only a non-empty value, so a blank App ID submitted below doesn't
+# permanently skip this block on every future run.
+GITHUB_APP_ID_SET_RE='"GITHUB_APP_ID"[[:space:]]*:[[:space:]]*"[^"]'
+if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! grep -qE "$GITHUB_APP_ID_SET_RE" "$SCRIPT_DIR/ai-tooling/claude-settings.json"; then
     log_banner rounded \
         "GitHub App bot identity (Nicholas' Clanker)" \
         "" \
@@ -317,8 +333,11 @@ if [ -f "$SCRIPT_DIR/tmux.conf" ]; then
 fi
 
 if [ ! -d "$HOME/.cargo" ]; then
-    spin "Installing Rust..." bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'
-    . "$HOME/.cargo/env"
+    if spin "Installing Rust..." bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'; then
+        . "$HOME/.cargo/env"
+    else
+        log warn "Rust install failed, continuing without it"
+    fi
 fi
 
 if [ "$UPDATE_MODE" != true ]; then
@@ -342,35 +361,35 @@ install_ai_tool() {
     case "$tool" in
         "Claude Code")
             if ! command -v claude &> /dev/null; then
-                spin "Installing Claude Code..." bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+                spin "Installing Claude Code..." bash -c 'curl -fsSL https://claude.ai/install.sh | bash' || log warn "  Claude Code install failed, continuing"
             else
                 log success "Claude Code already installed"
             fi
             ;;
         "GitHub Copilot CLI")
             if ! command -v copilot &> /dev/null; then
-                spin "Installing GitHub Copilot CLI..." bash -c 'brew install --cask copilot-cli'
+                spin "Installing GitHub Copilot CLI..." bash -c 'brew install --cask copilot-cli' || log warn "  GitHub Copilot CLI install failed, continuing"
             else
                 log success "GitHub Copilot CLI already installed"
             fi
             ;;
         "Gemini CLI")
             if ! command -v gemini &> /dev/null; then
-                spin "Installing Gemini CLI..." npm install -g @google/gemini-cli
+                spin "Installing Gemini CLI..." npm install -g @google/gemini-cli || log warn "  Gemini CLI install failed, continuing"
             else
                 log success "Gemini CLI already installed"
             fi
             ;;
         "OpenAI Codex")
             if ! command -v codex &> /dev/null; then
-                spin "Installing OpenAI Codex..." brew install --cask codex
+                spin "Installing OpenAI Codex..." brew install --cask codex || log warn "  OpenAI Codex install failed, continuing"
             else
                 log success "OpenAI Codex already installed"
             fi
             ;;
         "OpenCode")
             if ! command -v opencode &> /dev/null; then
-                spin "Installing OpenCode..." bash -c 'curl -fsSL https://opencode.ai/install | bash'
+                spin "Installing OpenCode..." bash -c 'curl -fsSL https://opencode.ai/install | bash' || log warn "  OpenCode install failed, continuing"
             else
                 log success "OpenCode already installed"
             fi
