@@ -81,6 +81,8 @@ python3 "$AI_TOOLING_DIR/scripts/render-claude-settings.py"
 
 if [ -f "$HOME/.codex/config.toml" ]; then
     python3 "$AI_TOOLING_DIR/scripts/sync-codex-env.py"
+else
+    log warn "No ~/.codex/config.toml yet -- run 'codex' once, then re-run sync-symlinks.sh (or machine-setup.sh --update) to sync the bot-identity env vars"
 fi
 
 # Only install the refresher once the private key actually exists locally
