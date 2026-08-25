@@ -7,6 +7,7 @@ Fails CLOSED on an unexpected internal error (blocks rather than silently
 allowing the command through), unlike BaseHook's default fail-open handling,
 since a guard that fails open on its own bugs isn't a guard.
 """
+import os
 import re
 import shlex
 import subprocess
@@ -18,6 +19,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
 from config import get_allowed_git_owners  # noqa: E402
 
 SEGMENT_SPLIT_RE = re.compile(r'&&|\|\||[;|\n]')
+# Strip subshell/brace-group/command-substitution wrapping (e.g. `(git ...)`,
+# `{ git ...; }`, `` `git ...` ``, `$(git ...)`) from segment boundaries so
+# wrapped invocations still surface `git`/`gh` as the first token instead of
+# silently skipping scope checks. Only the outer boundary is touched, so this
+# never reaches into quoted arguments (e.g. a commit message like "fix (bug)").
+LEADING_WRAP_RE = re.compile(r'^[(){}$`]+\s*')
+TRAILING_WRAP_RE = re.compile(r'\s*[(){}`]+$')
 GITHUB_HOST_RE = re.compile(
     r'^(?:https?://|ssh://)?(?:[^@/]+@)?github\.com[:/]+([^/]+)/', re.IGNORECASE
 )
@@ -206,6 +214,8 @@ def find_scope_violation(command: str, cwd: str, allowed_owners):
     """Return a human-readable violation reason, or None if the command is fine."""
     for raw_segment in SEGMENT_SPLIT_RE.split(command):
         segment = raw_segment.strip()
+        segment = LEADING_WRAP_RE.sub('', segment)
+        segment = TRAILING_WRAP_RE.sub('', segment)
         if not segment or ('git' not in segment and 'gh' not in segment):
             continue
 
@@ -218,9 +228,13 @@ def find_scope_violation(command: str, cwd: str, allowed_owners):
         if not tokens:
             continue
 
-        if tokens[0] == 'git':
+        # Compare on the basename so invoking the binary via an absolute or
+        # relative path (e.g. `/usr/bin/git`) doesn't bypass scope checks.
+        first_token = os.path.basename(tokens[0])
+
+        if first_token == 'git':
             reason = find_git_violation(tokens[1:], cwd, allowed_owners)
-        elif tokens[0] == 'gh':
+        elif first_token == 'gh':
             reason = find_gh_violation(tokens[1:], cwd, allowed_owners)
         else:
             continue
