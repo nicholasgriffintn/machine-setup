@@ -152,13 +152,20 @@ def resolve_named_remote_owner(cwd: str, name: str):
 
 
 def find_git_violation(args, cwd: str, allowed_owners):
+    # Track `-C <dir>` global flags so remote/owner resolution targets the
+    # directory git will actually operate in, not the hook's own cwd.
+    # Matches git's own semantics: each `-C` is applied relative to the
+    # previous one (an absolute path replaces it outright).
+    effective_cwd = cwd
     i = 0
     while i < len(args) and args[i].startswith('-'):
         if args[i] == '-C' and i + 1 < len(args):
+            effective_cwd = str(Path(effective_cwd) / args[i + 1])
             i += 2
         else:
             i += 1
     args = args[i:]
+    cwd = effective_cwd
     if not args:
         return None
 
