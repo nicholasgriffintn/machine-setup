@@ -9,3 +9,6 @@ ai-tooling/skills/.system
 .pyc
 __pycache__
 ai-tooling/.DS_Store
+ai-tooling/claude-settings.local.json
+
+__pycache__

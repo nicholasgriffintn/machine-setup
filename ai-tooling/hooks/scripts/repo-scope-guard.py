@@ -3,6 +3,13 @@
 PreToolUse hook (Bash matcher) that scopes both the `git` and `gh` CLIs to
 an allow-list of GitHub owners/orgs (see lib/config.py: get_allowed_git_owners).
 
+This is a defense-in-depth layer, not the only one: claude-settings.json also
+sets `url.https://github.com/.insteadOf git@github.com:` (and the ssh:// form)
+so every AI-driven github.com push goes out over HTTPS, where
+git-credential-clanker.py hands out a token scoped to a single owner's App
+installation -- meaning even a command this guard fails to parse still can't
+authenticate against a different owner's repo over SSH with the user's own key.
+
 Fails CLOSED on an unexpected internal error (blocks rather than silently
 allowing the command through), unlike BaseHook's default fail-open handling,
 since a guard that fails open on its own bugs isn't a guard.
@@ -37,6 +44,11 @@ GH_SAFE_SUBCOMMANDS = {
 GH_REPO_TARGET_ACTIONS = {
     'clone', 'view', 'fork', 'delete', 'rename', 'archive', 'unarchive', 'edit', 'sync',
 }
+
+# Wrapping git/gh in one of these (`bash -c "git push ..."`, or invoking
+# `/usr/bin/git` instead of bare `git`) must not skip scope checking.
+SHELL_WRAPPER_BASENAMES = {'bash', 'sh', 'zsh', 'dash'}
+MAX_RECURSION_DEPTH = 5
 
 
 def owner_from_github_url(url: str):
@@ -195,13 +207,26 @@ def find_gh_violation(args, cwd: str, allowed_owners):
 
     if subcommand == 'api':
         path = positionals[0] if positionals else None
-        if path:
-            match = API_REPOS_PATH_RE.search(path)
-            if match:
-                owner = match.group(1).lower()
-                if owner not in allowed_owners:
-                    return f"gh api targets github.com/{owner}"
-        return None
+        if not path:
+            return "gh api with no path is not owner-scoped"
+
+        normalized = path.strip().lstrip('/')
+        first_segment = normalized.split('?', 1)[0].split('/', 1)[0].lower()
+        if first_segment == 'graphql':
+            # GraphQL has no owner in the URL, so it can reach any repo/org
+            # visible to the token regardless of path scoping. Hard-block it.
+            return "gh api graphql is not owner-scoped and is blocked"
+
+        match = API_REPOS_PATH_RE.search(path)
+        if match:
+            owner = match.group(1).lower()
+            if owner not in allowed_owners:
+                return f"gh api targets github.com/{owner}"
+            return None
+
+        # Default deny: any path we don't recognize as repos/<owner>/...
+        # is not owner-scoped (e.g. orgs/<org>/repos, /user, /installation/*).
+        return f"gh api path '{path}' is not a recognized repos/<owner>/... path"
 
     owner = resolve_repo_owner(cwd)
     if owner and owner not in allowed_owners:
@@ -209,8 +234,11 @@ def find_gh_violation(args, cwd: str, allowed_owners):
     return None
 
 
-def find_scope_violation(command: str, cwd: str, allowed_owners):
+def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0):
     """Return a human-readable violation reason, or None if the command is fine."""
+    if _depth > MAX_RECURSION_DEPTH:
+        return "command nesting too deep to analyze safely"
+
     for raw_segment in SEGMENT_SPLIT_RE.split(command):
         segment = raw_segment.strip()
         if not segment or ('git' not in segment and 'gh' not in segment):
@@ -225,9 +253,35 @@ def find_scope_violation(command: str, cwd: str, allowed_owners):
         if not tokens:
             continue
 
-        if tokens[0] == 'git':
+        # `env` just strips leading VAR=val assignments (already handled
+        # above) and optional flags before the real command.
+        while tokens and Path(tokens[0]).name == 'env':
+            tokens = tokens[1:]
+            while tokens and tokens[0].startswith('-'):
+                tokens = tokens[1:]
+            tokens = strip_env_assignments(tokens)
+
+        if not tokens:
+            continue
+
+        basename = Path(tokens[0]).name
+
+        if basename in SHELL_WRAPPER_BASENAMES:
+            if '-c' in tokens:
+                wrapped = tokens[tokens.index('-c') + 1:]
+                if wrapped:
+                    reason = find_scope_violation(
+                        ' '.join(shlex.quote(t) for t in wrapped)
+                        if len(wrapped) > 1 else wrapped[0],
+                        cwd, allowed_owners, _depth + 1,
+                    )
+                    if reason:
+                        return reason
+            continue
+
+        if basename == 'git':
             reason = find_git_violation(tokens[1:], cwd, allowed_owners)
-        elif tokens[0] == 'gh':
+        elif basename == 'gh':
             reason = find_gh_violation(tokens[1:], cwd, allowed_owners)
         else:
             continue
