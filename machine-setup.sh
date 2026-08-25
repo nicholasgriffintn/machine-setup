@@ -304,7 +304,7 @@ if ! grep -q '^export GITHUB_APP_ID=' "$LOCAL_ENV_FILE" 2>/dev/null; then
         chmod 600 "$LOCAL_ENV_FILE"
         log success "Saved to $LOCAL_ENV_FILE -- open a new shell (or AI harness session) to pick it up"
     else
-        log warn "Skipped -- rerun machine-setup.sh --update any time to set it up"
+        log warn "Skipped -- rerun machine-setup.sh any time; it will detect the existing setup and offer to set it up"
     fi
 fi
 
