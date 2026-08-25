@@ -64,7 +64,14 @@ gwtr() {
 }
 
 gwtcd() {
-  local worktree=$(git worktree list | fzf | awk '{print $1}')
+  # --porcelain + tab-delimited fzf columns so a worktree path containing
+  # spaces (e.g. under "My Drive") survives intact, unlike splitting
+  # `git worktree list`'s human-readable output on whitespace.
+  local worktree=$(git worktree list --porcelain | awk '
+    /^worktree / { path = substr($0, 10) }
+    /^branch /   { print path "\t" substr($0, 8); path = "" }
+    /^detached/ && path { print path "\t(detached)"; path = "" }
+  ' | fzf --delimiter '\t' --with-nth=1,2 | cut -f1)
   [ -n "$worktree" ] && cd "$worktree"
 }
 
@@ -83,7 +90,12 @@ rge() {
     echo "Requires ripgrep and fzf"
     return 1
   fi
-  local file=$(rg --files-with-matches --no-messages "$1" | fzf --preview "rg --color=always --context=3 '$1' {}")
+  # Pass the pattern to the preview via an exported var, not string
+  # interpolation -- a pattern containing a quote would otherwise break out
+  # of the preview command's shell string.
+  local file
+  file=$(RGE_PATTERN="$1" rg --files-with-matches --no-messages -- "$1" \
+    | RGE_PATTERN="$1" fzf --preview 'rg --color=always --context=3 -- "$RGE_PATTERN" {}')
   [ -n "$file" ] && $EDITOR "$file"
 }
 
@@ -99,7 +111,7 @@ proj() {
 
 # Homebrew bundle dump automation
 brewdump() {
-  brew bundle dump --file=~/Documents/GitHub/machine-setup/Brewfile --force
+  brew bundle dump --file="$WORKSPACE_DIR/machine-setup/Brewfile" --force
   echo "✅ Brewfile updated"
 }
 
@@ -313,7 +325,7 @@ cheat() {
     echo "Examples: cheat tar, cheat git, cheat curl"
     return 1
   fi
-  curl "cheat.sh/$1"
+  curl "https://cheat.sh/$1"
 }
 
 # Create a QR code from text
@@ -322,7 +334,7 @@ qr() {
     echo "Usage: qr <text or URL>"
     return 1
   fi
-  echo "$@" | curl -F-=\<- qrenco.de
+  echo "$@" | curl -F-=\<- https://qrenco.de
 }
 
 # Upload and share files temporarily (24hrs)
@@ -364,7 +376,10 @@ gla() {
 
 # Find largest files/directories
 biggies() {
-  du -sh * .* 2>/dev/null | sort -hr | head -${1:-10}
+  # `.*` also globs `.` and `..`, which measure the whole cwd and its
+  # parent again and dominate the top N instead of real entries. The (N)
+  # qualifier keeps zsh from erroring when a directory has no dotfiles.
+  du -sh -- *(N) .[!.]*(N) ..?*(N) 2>/dev/null | sort -hr | head -${1:-10}
 }
 
 # Port check with process details
@@ -483,8 +498,14 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     echo "DNS cache flushed"
   }
 
-  # Add SSH key to macOS keychain on shell start
-  ssh-add --apple-use-keychain ~/.ssh/id_ed25519 2>/dev/null
+  # Add SSH key to macOS keychain on shell start -- checks both key types
+  # machine-setup.sh will generate, so this isn't a silent no-op for
+  # anyone using id_rsa instead of id_ed25519.
+  if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
+    ssh-add --apple-use-keychain "$HOME/.ssh/id_ed25519" 2>/dev/null
+  elif [[ -f "$HOME/.ssh/id_rsa" ]]; then
+    ssh-add --apple-use-keychain "$HOME/.ssh/id_rsa" 2>/dev/null
+  fi
 
   # Generate random MAC address (useful for wifi restrictions)
   get-new-mac() {

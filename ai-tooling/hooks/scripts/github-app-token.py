@@ -16,6 +16,7 @@ Usage:
 import base64
 import json
 import os
+import socket
 import stat
 import subprocess
 import sys
@@ -54,11 +55,16 @@ def build_jwt(app_id: str, key_path: str) -> str:
     payload = {"iat": now - 60, "exp": now + 540, "iss": app_id}
     signing_input = f"{b64url(json.dumps(header).encode())}.{b64url(json.dumps(payload).encode())}"
 
-    result = subprocess.run(
-        ['openssl', 'dgst', '-sha256', '-sign', key_path],
-        input=signing_input.encode(),
-        capture_output=True,
-    )
+    try:
+        result = subprocess.run(
+            ['openssl', 'dgst', '-sha256', '-sign', key_path],
+            input=signing_input.encode(),
+            capture_output=True,
+        )
+    except FileNotFoundError:
+        fail_with_setup_instructions(
+            "openssl not found on PATH. Install openssl and make sure it's available in your shell."
+        )
     if result.returncode != 0:
         fail_with_setup_instructions(
             f"openssl failed to sign the JWT with {key_path}: {result.stderr.decode().strip()}"
@@ -78,6 +84,10 @@ def api_request(url: str, jwt: str, method: str = 'GET'):
     except urllib.error.HTTPError as exc:
         print(f"🚫 GitHub API error ({exc.code}) calling {url}: {exc.read().decode()}", file=sys.stderr)
         sys.exit(1)
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        fail_with_setup_instructions(
+            f"Network unreachable calling {url}: {exc}. Check your connection (VPN/DNS) and try again."
+        )
 
 
 def main():
