@@ -23,6 +23,7 @@ AI_TOOLING_MAPPINGS=(
     "~/.codex/AGENTS.md:INSTRUCTIONS.md"
     "~/.codex/hooks:hooks"
     "~/.codex/hooks.json:codex-hooks.json"
+    "~/.local/bin/gh:scripts/gh_wrapper.py"
     "~/.copilot/agents:agents"
     "~/.copilot/skills:skills"
     "~/.copilot/copilot-instructions.md:INSTRUCTIONS.md"
@@ -75,13 +76,18 @@ for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     fi
 done
 
+python3 "$AI_TOOLING_DIR/scripts/ensure-local-bin-path.py"
 python3 "$AI_TOOLING_DIR/scripts/render-claude-settings.py"
 
 if [ -f "$HOME/.codex/config.toml" ]; then
     python3 "$AI_TOOLING_DIR/scripts/sync-codex-env.py"
+else
+    log warn "No ~/.codex/config.toml yet -- run 'codex' once, then re-run sync-symlinks.sh (or machine-setup.sh --update) to sync the bot-identity env vars"
 fi
 
-GITHUB_APP_SETTINGS_KEY='"GITHUB_APP_ID"'
-if grep -q "$GITHUB_APP_SETTINGS_KEY" "$AI_TOOLING_DIR/claude-settings.json" 2>/dev/null; then
+# Only install the refresher once the private key actually exists locally
+# -- see check-bot-identity-configured.py for why presence in the
+# git-tracked settings file alone isn't enough.
+if python3 "$AI_TOOLING_DIR/scripts/check-bot-identity-configured.py"; then
     bash "$AI_TOOLING_DIR/scripts/install-gh-token-refresher.sh"
 fi

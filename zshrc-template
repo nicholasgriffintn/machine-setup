@@ -59,7 +59,8 @@ if [[ -f "$BREW_PREFIX/opt/antidote/share/antidote/antidote.zsh" && -f "${ZDOTDI
   # Initialize plugins statically for speed
   antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
 fi
-unset BREW_PREFIX
+# BREW_PREFIX is reused (not unset here) by the Oh My Posh block below, to
+# avoid a second `brew --prefix` shellout on every shell start.
 
 #
 # 4. Functions, Aliases, Bindings (Post-Plugin)
@@ -114,17 +115,15 @@ fi
 #
 # Theme (Oh My Posh)
 #
-if command -v oh-my-posh &>/dev/null && command -v brew &>/dev/null; then
-  OMP_CONFIG="$(brew --prefix oh-my-posh 2>/dev/null)/themes/catppuccin.omp.json"
+if command -v oh-my-posh &>/dev/null && [[ -n "$BREW_PREFIX" ]]; then
+  OMP_CONFIG="$BREW_PREFIX/opt/oh-my-posh/themes/catppuccin.omp.json"
   if [[ -f "$OMP_CONFIG" ]]; then
     eval "$(oh-my-posh init zsh --config "$OMP_CONFIG")"
   fi
   unset OMP_CONFIG
 fi
+unset BREW_PREFIX
 [[ -f "$HOME/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]] && source "$HOME/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh"
-
-# Machine-local env vars (not tracked by this repo) -- see machine-setup.sh
-[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
 
 #
 # Startup Info
@@ -135,3 +134,8 @@ if [[ -z $FASTFETCH_SHOWN ]] && command -v fastfetch &>/dev/null && [[ -f "$HOME
 fi
 
 # zprof
+
+# >>> machine-setup local bin >>>
+typeset -U path PATH
+path=("$HOME/.local/bin" $path)
+# <<< machine-setup local bin <<<

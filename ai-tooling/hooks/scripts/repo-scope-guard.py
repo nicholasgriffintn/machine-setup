@@ -14,6 +14,7 @@ Fails CLOSED on an unexpected internal error (blocks rather than silently
 allowing the command through), unlike BaseHook's default fail-open handling,
 since a guard that fails open on its own bugs isn't a guard.
 """
+import os
 import re
 import shlex
 import subprocess
@@ -25,6 +26,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
 from config import get_allowed_git_owners  # noqa: E402
 
 SEGMENT_SPLIT_RE = re.compile(r'&&|\|\||[;|\n]')
+# Strip subshell/brace-group/command-substitution wrapping (e.g. `(git ...)`,
+# `{ git ...; }`, `` `git ...` ``, `$(git ...)`) from segment boundaries so
+# wrapped invocations still surface `git`/`gh` as the first token instead of
+# silently skipping scope checks. Only the outer boundary is touched, so this
+# never reaches into quoted arguments (e.g. a commit message like "fix (bug)").
+LEADING_WRAP_RE = re.compile(r'^[(){}$`]+\s*')
+TRAILING_WRAP_RE = re.compile(r'\s*[(){}`]+$')
 GITHUB_HOST_RE = re.compile(
     r'^(?:https?://|ssh://)?(?:[^@/]+@)?github\.com[:/]+([^/]+)/', re.IGNORECASE
 )
@@ -37,6 +45,24 @@ GIT_SAFE_SUBCOMMANDS = {
 GIT_URL_ARG_SUBCOMMANDS = {'clone', 'ls-remote'}
 GIT_REMOTE_URL_SUBCOMMANDS = {'push', 'pull', 'fetch'}
 
+# Flags used by clone/ls-remote/submodule-add/remote-add/set-url/push/pull/fetch
+# that consume a separate following token as their value. Without accounting
+# for these, e.g. `git clone --branch main <url>` shifts `<url>` out of the
+# first-positional slot the scanner below expects it in.
+GIT_FLAGS_WITH_VALUE = {
+    '-b', '--branch',
+    '-o', '--origin',
+    '-t', '--track',
+    '-m', '--master',
+    '-c', '--config',
+    '-j', '--jobs',
+    '--depth', '--shallow-since', '--shallow-exclude',
+    '--template', '--reference', '--reference-if-able',
+    '--separate-git-dir', '--upload-pack', '--push-option',
+    '--server-option', '--filter', '--name', '--exec',
+    '--negotiation-tip',
+}
+
 GH_SAFE_SUBCOMMANDS = {
     'auth', 'config', 'alias', 'extension', 'completion', 'help',
     'version', '--version', '-v', 'status', 'search', 'gist',
@@ -47,9 +73,8 @@ GH_REPO_TARGET_ACTIONS = {
 
 # Wrapping git/gh in one of these (`bash -c "git push ..."`, or invoking
 # `/usr/bin/git` instead of bare `git`) must not skip scope checking.
-SHELL_WRAPPER_BASENAMES = {'bash', 'sh', 'zsh', 'dash'}
+SHELL_WRAPPER_BASENAMES = {'bash', 'sh', 'zsh', 'dash', 'ksh'}
 MAX_RECURSION_DEPTH = 5
-
 
 def owner_from_github_url(url: str):
     match = GITHUB_HOST_RE.match(url.strip())
@@ -72,6 +97,28 @@ def is_url_like(token: str) -> bool:
         or token.startswith('git@')
         or '@github.com:' in token
     )
+
+
+def extract_positionals(tokens):
+    """Return the non-flag arguments, skipping known value-taking flags
+    (and the value token that follows each of them) so a value like
+    `git clone --branch main <url>` doesn't shift into the URL slot."""
+    positionals = []
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok == '--':
+            positionals.extend(tokens[i + 1:])
+            break
+        if tok.startswith('-'):
+            if tok in GIT_FLAGS_WITH_VALUE and i + 1 < len(tokens):
+                i += 2
+            else:
+                i += 1
+            continue
+        positionals.append(tok)
+        i += 1
+    return positionals
 
 
 def strip_env_assignments(tokens):
@@ -105,13 +152,20 @@ def resolve_named_remote_owner(cwd: str, name: str):
 
 
 def find_git_violation(args, cwd: str, allowed_owners):
+    # Track `-C <dir>` global flags so remote/owner resolution targets the
+    # directory git will actually operate in, not the hook's own cwd.
+    # Matches git's own semantics: each `-C` is applied relative to the
+    # previous one (an absolute path replaces it outright).
+    effective_cwd = cwd
     i = 0
     while i < len(args) and args[i].startswith('-'):
         if args[i] == '-C' and i + 1 < len(args):
+            effective_cwd = str(Path(effective_cwd) / args[i + 1])
             i += 2
         else:
             i += 1
     args = args[i:]
+    cwd = effective_cwd
     if not args:
         return None
 
@@ -124,7 +178,7 @@ def find_git_violation(args, cwd: str, allowed_owners):
     owner = None
 
     if subcommand in GIT_URL_ARG_SUBCOMMANDS or subcommand == 'submodule':
-        positionals = [a for a in rest if not a.startswith('-')]
+        positionals = extract_positionals(rest)
         if subcommand == 'submodule':
             if not positionals or positionals[0] != 'add':
                 return None
@@ -136,7 +190,7 @@ def find_git_violation(args, cwd: str, allowed_owners):
             return None
 
     elif subcommand == 'remote':
-        positionals = [a for a in rest if not a.startswith('-')]
+        positionals = extract_positionals(rest)
         if len(positionals) >= 3 and positionals[0] in ('add', 'set-url'):
             url = positionals[2]
             owner = owner_from_github_url(url) if is_url_like(url) else None
@@ -144,7 +198,7 @@ def find_git_violation(args, cwd: str, allowed_owners):
             return None
 
     elif subcommand in GIT_REMOTE_URL_SUBCOMMANDS:
-        positionals = [a for a in rest if not a.startswith('-')]
+        positionals = extract_positionals(rest)
         target = positionals[0] if positionals else None
         if target and is_url_like(target):
             owner = owner_from_github_url(target)
@@ -234,12 +288,16 @@ def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0
 
     for raw_segment in SEGMENT_SPLIT_RE.split(command):
         segment = raw_segment.strip()
+        segment = LEADING_WRAP_RE.sub('', segment)
+        segment = TRAILING_WRAP_RE.sub('', segment)
         if not segment or ('git' not in segment and 'gh' not in segment):
             continue
 
-        # Let ValueError (e.g. unbalanced quotes) propagate to main()'s
-        # catch-all, which fails CLOSED. Swallowing it here would let an
-        # unparseable segment slip through unscoped.
+        # No try/except here: a malformed segment (e.g. the wrap-stripping
+        # above turning an escaped trailing `foo\)` into a dangling `foo\`)
+        # must fail closed via main()'s catch-all, not be silently skipped
+        # -- catching and continuing here is exactly the fail-open bug that
+        # let a segment shlex can't parse slip through unscoped.
         tokens = shlex.split(segment)
 
         tokens = strip_env_assignments(tokens)
