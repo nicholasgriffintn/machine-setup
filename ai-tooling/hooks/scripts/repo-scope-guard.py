@@ -212,7 +212,13 @@ def find_scope_violation(command: str, cwd: str, allowed_owners):
         try:
             tokens = shlex.split(segment)
         except ValueError:
-            continue
+            # Segment mentions git/gh but doesn't tokenize cleanly (e.g. an
+            # unbalanced quote). Fail closed rather than silently skipping it.
+            return (
+                f"a command segment could not be safely parsed ({segment!r}), "
+                "which may target an owner outside the allowed owner(s) "
+                f"({', '.join(sorted(allowed_owners))})."
+            )
 
         tokens = strip_env_assignments(tokens)
         if not tokens:
