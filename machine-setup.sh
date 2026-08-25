@@ -313,8 +313,16 @@ if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! python3 "$SCRIPT_DI
             "GITHUB_APP_ID=$APP_ID" \
             "GITHUB_APP_PRIVATE_KEY_PATH=$KEY_PATH"
         [ -f "$HOME/.codex/config.toml" ] && python3 "$SCRIPT_DIR/ai-tooling/scripts/sync-codex-env.py"
-        bash "$SCRIPT_DIR/ai-tooling/scripts/install-gh-token-refresher.sh"
-        log success "Saved -- Claude Code and Codex pick this up on their very next tool call, no new shell needed"
+
+        # Only start the refresher once the key is actually usable -- same
+        # check sync-symlinks.sh uses. Installing it against a missing (or
+        # insecurely-permissioned) key would just fail silently every 30 min.
+        if python3 "$SCRIPT_DIR/ai-tooling/scripts/check-bot-identity-configured.py"; then
+            bash "$SCRIPT_DIR/ai-tooling/scripts/install-gh-token-refresher.sh"
+            log success "Saved -- Claude Code and Codex pick this up on their very next tool call, no new shell needed"
+        else
+            log warn "Saved App ID and key path, but the key isn't usable yet (missing, or not chmod 600) -- fix that, then rerun machine-setup.sh to start the token refresher"
+        fi
     else
         log warn "Skipped -- rerun machine-setup.sh any time; it will detect the existing setup and offer to set it up"
     fi

@@ -10,10 +10,14 @@ clone on a new machine silently skips the setup prompt (machine-setup.sh)
 and installs a token refresher (sync-symlinks.sh) pointed at a private key
 that was never copied there, leaving the bot identity broken with no
 signal to the user. This only returns true once the private key those
-settings actually point at exists locally.
+settings actually point at exists locally AND has permissions
+github-app-token.py will actually accept -- it fails closed on a
+group/other-readable key, so a 0644 file would otherwise pass this check
+and then fail every single refresh with no prompt to fix it.
 """
 import json
 import os
+import stat
 import sys
 from pathlib import Path
 
@@ -33,7 +37,13 @@ def main():
     if not app_id or not key_path:
         sys.exit(1)
 
-    if not os.path.isfile(os.path.expanduser(key_path)):
+    key_path = os.path.expanduser(key_path)
+    if not os.path.isfile(key_path):
+        sys.exit(1)
+
+    # Matches github-app-token.py's own permission gate exactly.
+    key_mode = stat.S_IMODE(os.stat(key_path).st_mode)
+    if key_mode & (stat.S_IRWXG | stat.S_IRWXO):
         sys.exit(1)
 
     sys.exit(0)
