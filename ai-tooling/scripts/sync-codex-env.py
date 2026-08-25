@@ -11,14 +11,16 @@ truth for both harnesses), rewriting only that section and leaving
 everything else in config.toml untouched.
 """
 import json
-import os
 import re
 import sys
-import tempfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib.secure_io import write_text_atomic  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CLAUDE_SETTINGS = REPO_ROOT / 'ai-tooling' / 'claude-settings.json'
+CLAUDE_SETTINGS_LOCAL = REPO_ROOT / 'ai-tooling' / 'claude-settings.local.json'
 CODEX_CONFIG = Path.home() / '.codex' / 'config.toml'
 SECTION_HEADER = '[shell_environment_policy.set]'
 
@@ -26,6 +28,9 @@ SECTION_HEADER = '[shell_environment_policy.set]'
 def load_desired_env():
     with open(CLAUDE_SETTINGS) as f:
         env = json.load(f).get('env', {})
+    if CLAUDE_SETTINGS_LOCAL.is_file():
+        with open(CLAUDE_SETTINGS_LOCAL) as f:
+            env.update(json.load(f).get('env', {}))
     return {k: v.replace('~/.claude/', '~/.codex/') if isinstance(v, str) else v
             for k, v in env.items()}
 
@@ -77,22 +82,12 @@ def sync(desired, config_path):
         new_lines = lines[:section_start + 1] + section_lines + lines[section_end:]
 
     if changed:
-        _atomic_write(config_path, '\n'.join(new_lines) + '\n')
+        # write_text_atomic (ai-tooling/scripts/lib/secure_io.py) covers the
+        # same crash-safety this PR set out to fix -- temp file + os.replace
+        # -- and additionally chmods to 600, since this file carries the
+        # same live credentials as claude-settings.local.json.
+        write_text_atomic(config_path, '\n'.join(new_lines) + '\n')
     return changed
-
-
-def _atomic_write(path, text):
-    """Write via temp file + os.replace so a kill/crash mid-write can never
-    leave Codex's live config.toml (project trust list, per-hook consent
-    tracking) truncated or partially written."""
-    fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=f'.{path.name}.', suffix='.tmp')
-    try:
-        with os.fdopen(fd, 'w') as f:
-            f.write(text)
-        os.replace(tmp_path, path)
-    except BaseException:
-        os.unlink(tmp_path)
-        raise
 
 
 def main():
