@@ -135,3 +135,8 @@ if [[ -z $FASTFETCH_SHOWN ]] && command -v fastfetch &>/dev/null && [[ -f "$HOME
 fi
 
 # zprof
+
+# >>> machine-setup local bin >>>
+typeset -U path PATH
+path=("$HOME/.local/bin" $path)
+# <<< machine-setup local bin <<<

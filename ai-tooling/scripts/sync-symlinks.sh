@@ -23,6 +23,7 @@ AI_TOOLING_MAPPINGS=(
     "~/.codex/AGENTS.md:INSTRUCTIONS.md"
     "~/.codex/hooks:hooks"
     "~/.codex/hooks.json:codex-hooks.json"
+    "~/.local/bin/gh:scripts/gh_wrapper.py"
     "~/.copilot/agents:agents"
     "~/.copilot/skills:skills"
     "~/.copilot/copilot-instructions.md:INSTRUCTIONS.md"
@@ -75,6 +76,7 @@ for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     fi
 done
 
+python3 "$AI_TOOLING_DIR/scripts/ensure-local-bin-path.py"
 python3 "$AI_TOOLING_DIR/scripts/render-claude-settings.py"
 
 if [ -f "$HOME/.codex/config.toml" ]; then
