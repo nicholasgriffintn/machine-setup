@@ -1,0 +1,7 @@
+#!/bin/bash
+# Installed via `git config core.hooksPath .githooks` (see
+# ai-tooling/scripts/sync-symlinks.sh). Kept as a thin wrapper so the actual
+# scan logic lives with the other hooks in ai-tooling/hooks/.
+set -eu
+REPO_ROOT=$(git rev-parse --show-toplevel)
+exec python3 "$REPO_ROOT/ai-tooling/hooks/scripts/pre-commit-secret-scan.py"
