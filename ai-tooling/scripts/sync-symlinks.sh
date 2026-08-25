@@ -19,7 +19,6 @@ AI_TOOLING_MAPPINGS=(
     "~/.claude/commands:commands"
     "~/.claude/skills:skills"
     "~/.claude/CLAUDE.md:INSTRUCTIONS.md"
-    "~/.claude/settings.json:claude-settings.json"
     "~/.codex/skills:skills"
     "~/.codex/AGENTS.md:INSTRUCTIONS.md"
     "~/.codex/hooks:hooks"
@@ -37,6 +36,11 @@ if [ ! -d "$AI_TOOLING_DIR" ]; then
 fi
 
 log info "Syncing AI tooling symlinks from $AI_TOOLING_DIR ..."
+
+if [ "$(git -C "$REPO_ROOT" config --get core.hooksPath)" != ".githooks" ]; then
+    git -C "$REPO_ROOT" config core.hooksPath .githooks
+    log success "  Installed pre-commit secret scan (core.hooksPath -> .githooks)"
+fi
 
 for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     IFS=':' read -r target_path src_name <<< "$mapping"
@@ -71,6 +75,13 @@ for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     fi
 done
 
+python3 "$AI_TOOLING_DIR/scripts/render-claude-settings.py"
+
 if [ -f "$HOME/.codex/config.toml" ]; then
     python3 "$AI_TOOLING_DIR/scripts/sync-codex-env.py"
+fi
+
+GITHUB_APP_SETTINGS_KEY='"GITHUB_APP_ID"'
+if grep -q "$GITHUB_APP_SETTINGS_KEY" "$AI_TOOLING_DIR/claude-settings.json" 2>/dev/null; then
+    bash "$AI_TOOLING_DIR/scripts/install-gh-token-refresher.sh"
 fi

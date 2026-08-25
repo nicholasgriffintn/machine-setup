@@ -17,6 +17,7 @@ import base64
 import json
 import os
 import socket
+import stat
 import subprocess
 import sys
 import time
@@ -99,6 +100,14 @@ def main():
     key_path = os.path.expanduser(key_path)
     if not os.path.isfile(key_path):
         fail_with_setup_instructions(f"Private key not found at {key_path}")
+
+    key_mode = stat.S_IMODE(os.stat(key_path).st_mode)
+    if key_mode & (stat.S_IRWXG | stat.S_IRWXO):
+        fail_with_setup_instructions(
+            f"{key_path} is readable by group/other (mode {oct(key_mode)}). "
+            f"This key can mint tokens for every installation of the app -- "
+            f"run: chmod 600 {key_path}"
+        )
 
     jwt = build_jwt(app_id, key_path)
 
