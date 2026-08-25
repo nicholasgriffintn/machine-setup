@@ -265,53 +265,47 @@ if [ -d "$SCRIPT_DIR/.config" ]; then
     done
 fi
 
-# Symlink AI tooling directories for each provider
-# Format: "target_path:source_name"
-# target_path supports ~ for home directory
-AI_TOOLING_MAPPINGS=(
-    # OpenCode (~/.config/opencode/)
-    "~/.config/opencode/command:commands"
-    "~/.config/opencode/INSTRUCTIONS.md:INSTRUCTIONS.md"
-    # Claude (~/.claude/)
-    "~/.claude/agents:agents"
-    "~/.claude/hooks:hooks"
-    "~/.claude/commands:commands"
-    "~/.claude/skills:skills"
-    "~/.claude/CLAUDE.md:INSTRUCTIONS.md"
-    "~/.claude/settings.json:claude-settings.json"
-    # Codex (~/.codex/)
-    "~/.codex/skills:skills"
-    "~/.codex/AGENTS.md:INSTRUCTIONS.md"
-    # Copilot (~/.copilot/)
-    "~/.copilot/agents:agents"
-    "~/.copilot/skills:skills"
-    "~/.copilot/copilot-instructions.md:INSTRUCTIONS.md"
-    # Gemini (~/.gemini/)
-    "~/.gemini/skills:skills"
-    "~/.gemini/GEMINI.md:INSTRUCTIONS.md"
-)
-
 if [ -d "$SCRIPT_DIR/ai-tooling" ]; then
-    log info "Symlinking AI tooling..."
-    for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
-        IFS=':' read -r target_path src_name <<< "$mapping"
-        src_path="$SCRIPT_DIR/ai-tooling/$src_name"
-        target="${target_path/#\~/$HOME}"
-        target_dir=$(dirname "$target")
-        target_name=$(basename "$target")
+    bash "$SCRIPT_DIR/ai-tooling/scripts/sync-symlinks.sh"
+fi
 
-        if [ -e "$src_path" ]; then
-            mkdir -p "$target_dir"
-            if [ -L "$target" ]; then
-                log success "  $target_name already symlinked"
-            elif [ -e "$target" ]; then
-                log warn "  $target_name exists (not a symlink), skipping"
-            else
-                ln -s "$src_path" "$target"
-                log success "  Linked $target_name -> $src_name"
-            fi
+# Machine-local env vars, kept out of this repo, sourced by zshrc-template.
+LOCAL_ENV_FILE="$HOME/.zshrc.local"
+if ! grep -q '.zshrc.local' "$HOME/.zshrc" 2>/dev/null; then
+    printf '\n# Machine-local env vars (not tracked by this repo) -- see machine-setup.sh\n[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"\n' >> "$HOME/.zshrc"
+    log success "Added .zshrc.local sourcing to .zshrc"
+fi
+
+if ! grep -q '^export GITHUB_APP_ID=' "$LOCAL_ENV_FILE" 2>/dev/null; then
+    log_banner rounded \
+        "GitHub App bot identity (Nicholas' Clanker)" \
+        "" \
+        "AI coding agents push/comment as this GitHub App instead of you." \
+        "You'll need it already created, with a private key generated" \
+        "and downloaded (github.com/settings/apps -> your app -> General)."
+
+    if confirm "Set it up now?"; then
+        APP_ID=$(input "GitHub App ID (from the app's General settings page):" "")
+        DEFAULT_KEY_PATH="$HOME/.config/github-app/nicholas-clanker.pem"
+        KEY_PATH=$(input "Path to the downloaded private key (.pem):" "$DEFAULT_KEY_PATH")
+        KEY_PATH="${KEY_PATH/#\~/$HOME}"
+
+        if [ -f "$KEY_PATH" ]; then
+            chmod 600 "$KEY_PATH"
+            log success "Private key found and locked down to your user only (chmod 600)"
+        else
+            log warn "No file found at $KEY_PATH yet -- saving the path anyway, add the key there when ready"
         fi
-    done
+
+        {
+            echo "export GITHUB_APP_ID=$APP_ID"
+            echo "export GITHUB_APP_PRIVATE_KEY_PATH=$KEY_PATH"
+        } >> "$LOCAL_ENV_FILE"
+        chmod 600 "$LOCAL_ENV_FILE"
+        log success "Saved to $LOCAL_ENV_FILE -- open a new shell (or AI harness session) to pick it up"
+    else
+        log warn "Skipped -- rerun machine-setup.sh --update any time to set it up"
+    fi
 fi
 
 # Tmux configuration

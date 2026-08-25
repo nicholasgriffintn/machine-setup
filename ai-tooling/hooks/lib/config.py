@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 """Configuration loader for hooks (no external dependencies)."""
+import os
 from typing import Dict, Any, List, Tuple
+
+
+def get_allowed_git_owners() -> List[str]:
+    """GitHub owners/orgs that AI-driven git access is scoped to.
+
+    Override with a comma-separated AI_GIT_ALLOWED_OWNERS env var.
+    """
+    env_value = os.environ.get('AI_GIT_ALLOWED_OWNERS', '')
+    if env_value.strip():
+        return [o.strip().lower() for o in env_value.split(',') if o.strip()]
+    return ['nicholasgriffintn']
 
 
 def get_protected_patterns() -> Tuple[List[str], List[str]]:

@@ -123,6 +123,9 @@ if command -v oh-my-posh &>/dev/null && command -v brew &>/dev/null; then
 fi
 [[ -f "$HOME/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh" ]] && source "$HOME/workspace/catppuccin_mocha-zsh-syntax-highlighting.zsh"
 
+# Machine-local env vars (not tracked by this repo) -- see machine-setup.sh
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
 #
 # Startup Info
 #

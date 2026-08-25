@@ -119,6 +119,52 @@ def main():
             },
             'expected_exit': 0
         },
+        {
+            'name': 'repo-scope-guard (non-git command)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {'command': 'ls -la'}},
+            'expected_exit': 0
+        },
+        {
+            'name': 'repo-scope-guard (git clone own org)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': 'git clone https://github.com/nicholasgriffintn/foo.git'
+            }},
+            'expected_exit': 0
+        },
+        {
+            'name': 'repo-scope-guard (git clone other org, blocked)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': 'git clone https://github.com/facebook/react.git'
+            }},
+            'expected_exit': 2
+        },
+        {
+            'name': 'repo-scope-guard (git remote add other org, blocked)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': 'git remote add upstream https://github.com/oven-sh/bun.git'
+            }},
+            'expected_exit': 2
+        },
+        {
+            'name': 'repo-scope-guard (gh -R other org, blocked)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': 'gh pr list -R facebook/react'
+            }},
+            'expected_exit': 2
+        },
+        {
+            'name': 'repo-scope-guard (gh repo clone own org)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': 'gh repo clone nicholasgriffintn/foo'
+            }},
+            'expected_exit': 0
+        },
     ]
 
     passed = 0

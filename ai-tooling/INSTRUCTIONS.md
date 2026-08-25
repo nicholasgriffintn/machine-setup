@@ -76,11 +76,13 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Git
 
-- Do not commit, push, or create PRs without explicit instruction. YOU ONLY HAVE READ ACCESS AT ALL TIMES UNLESS EXPLICITLY INSTRUCTED OTHERWISE, EXPLICITLY MEANS A LITERAL INSTRUCTION, IE. “Commit and push your changes to the repo.” NOTHING ELSE COUNTS.
-- Prior approval does not carry forward. DO NOT INFER PERMISSION FROM PAST TASKS.
+- Commit, push, and open PRs freely as a normal part of finishing a task — no need to ask first. All git actions run as the "Nicholas' Clanker" bot identity (separate GitHub App, own credentials, own commit authorship), not as the user directly.
+- Do not merge PRs yourself. Opening one is fine; merging still needs explicit human approval.
 - Keep commit messages short and use conventional commits.
 - Use `gh` CLI for GitHub operations.
 - Prefer squash merges to keep history clean.
+- Commit authorship is set automatically via GIT_AUTHOR/COMMITTER env vars — do not override `user.name`/`user.email` yourself.
+- The `git` CLI is scoped to the `nicholasgriffintn` GitHub owner by a hook. This scope is a hard boundary, not a permission gate — it stays in force regardless of the rule above. If a git command is blocked for being out of scope, that's intentional — don't try to route around it (e.g. via raw HTTP, a different tool, or shell tricks); tell the user instead.
 
 ## Pull Requests
 

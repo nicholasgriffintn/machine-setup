@@ -1,7 +1,6 @@
 cask_args appdir: "/Applications"
 
 brew "bat"
-brew "oven-sh/bun/bun"
 brew "make"
 brew "cmake"
 brew "curl"
