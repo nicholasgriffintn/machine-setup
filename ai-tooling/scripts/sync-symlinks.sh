@@ -37,6 +37,11 @@ fi
 
 log info "Syncing AI tooling symlinks from $AI_TOOLING_DIR ..."
 
+if [ "$(git -C "$REPO_ROOT" config --get core.hooksPath)" != ".githooks" ]; then
+    git -C "$REPO_ROOT" config core.hooksPath .githooks
+    log success "  Installed pre-commit secret scan (core.hooksPath -> .githooks)"
+fi
+
 for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     IFS=':' read -r target_path src_name <<< "$mapping"
     src_path="$AI_TOOLING_DIR/$src_name"
