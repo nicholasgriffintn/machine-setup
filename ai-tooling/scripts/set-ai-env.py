@@ -18,6 +18,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib.secure_io import write_json_atomic  # noqa: E402
+
 AI_TOOLING_DIR = Path(__file__).resolve().parent.parent
 BASE_SETTINGS = AI_TOOLING_DIR / 'claude-settings.json'
 LOCAL_SETTINGS = AI_TOOLING_DIR / 'claude-settings.local.json'
@@ -46,9 +49,7 @@ def main():
         key, _, value = pair.partition('=')
         settings['env'][key] = value
 
-    with open(target, 'w') as f:
-        json.dump(settings, f, indent=2)
-        f.write('\n')
+    write_json_atomic(target, settings)
 
     print(f"Updated {target}")
     subprocess.run(['python3', str(RENDER_SCRIPT)], check=True)

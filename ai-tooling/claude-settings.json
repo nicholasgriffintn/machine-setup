@@ -98,13 +98,17 @@
     "AI_GIT_ALLOWED_OWNERS": "nicholasgriffintn",
     "GITHUB_APP_ID": "4717035",
     "GITHUB_APP_PRIVATE_KEY_PATH": "~/.config/machine-setup/nicholas-clanker.2026-08-25.private-key.pem",
-    "GIT_CONFIG_COUNT": "3",
+    "GIT_CONFIG_COUNT": "5",
     "GIT_CONFIG_KEY_0": "commit.gpgsign",
     "GIT_CONFIG_VALUE_0": "false",
     "GIT_CONFIG_KEY_1": "credential.helper",
     "GIT_CONFIG_VALUE_1": "",
     "GIT_CONFIG_KEY_2": "credential.https://github.com.helper",
-    "GIT_CONFIG_VALUE_2": "!~/.claude/hooks/scripts/git-credential-clanker.py"
+    "GIT_CONFIG_VALUE_2": "!~/.claude/hooks/scripts/git-credential-clanker.py",
+    "GIT_CONFIG_KEY_3": "url.https://github.com/.insteadOf",
+    "GIT_CONFIG_VALUE_3": "git@github.com:",
+    "GIT_CONFIG_KEY_4": "url.https://github.com/.insteadOf",
+    "GIT_CONFIG_VALUE_4": "ssh://git@github.com/"
   },
   "effortLevel": "high",
   "skipWorkflowUsageWarning": true

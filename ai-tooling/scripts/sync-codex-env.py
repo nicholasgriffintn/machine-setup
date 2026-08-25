@@ -15,6 +15,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib.secure_io import write_text_atomic  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CLAUDE_SETTINGS = REPO_ROOT / 'ai-tooling' / 'claude-settings.json'
 CLAUDE_SETTINGS_LOCAL = REPO_ROOT / 'ai-tooling' / 'claude-settings.local.json'
@@ -79,7 +82,7 @@ def sync(desired, config_path):
         new_lines = lines[:section_start + 1] + section_lines + lines[section_end:]
 
     if changed:
-        config_path.write_text('\n'.join(new_lines) + '\n')
+        write_text_atomic(config_path, '\n'.join(new_lines) + '\n')
     return changed
 
 
