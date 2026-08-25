@@ -45,6 +45,24 @@ GIT_SAFE_SUBCOMMANDS = {
 GIT_URL_ARG_SUBCOMMANDS = {'clone', 'ls-remote'}
 GIT_REMOTE_URL_SUBCOMMANDS = {'push', 'pull', 'fetch'}
 
+# Flags used by clone/ls-remote/submodule-add/remote-add/set-url/push/pull/fetch
+# that consume a separate following token as their value. Without accounting
+# for these, e.g. `git clone --branch main <url>` shifts `<url>` out of the
+# first-positional slot the scanner below expects it in.
+GIT_FLAGS_WITH_VALUE = {
+    '-b', '--branch',
+    '-o', '--origin',
+    '-t', '--track',
+    '-m', '--master',
+    '-c', '--config',
+    '-j', '--jobs',
+    '--depth', '--shallow-since', '--shallow-exclude',
+    '--template', '--reference', '--reference-if-able',
+    '--separate-git-dir', '--upload-pack', '--push-option',
+    '--server-option', '--filter', '--name', '--exec',
+    '--negotiation-tip',
+}
+
 GH_SAFE_SUBCOMMANDS = {
     'auth', 'config', 'alias', 'extension', 'completion', 'help',
     'version', '--version', '-v', 'status', 'search', 'gist',
@@ -80,6 +98,28 @@ def is_url_like(token: str) -> bool:
         or token.startswith('git@')
         or '@github.com:' in token
     )
+
+
+def extract_positionals(tokens):
+    """Return the non-flag arguments, skipping known value-taking flags
+    (and the value token that follows each of them) so a value like
+    `git clone --branch main <url>` doesn't shift into the URL slot."""
+    positionals = []
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok == '--':
+            positionals.extend(tokens[i + 1:])
+            break
+        if tok.startswith('-'):
+            if tok in GIT_FLAGS_WITH_VALUE and i + 1 < len(tokens):
+                i += 2
+            else:
+                i += 1
+            continue
+        positionals.append(tok)
+        i += 1
+    return positionals
 
 
 def strip_env_assignments(tokens):
@@ -132,7 +172,7 @@ def find_git_violation(args, cwd: str, allowed_owners):
     owner = None
 
     if subcommand in GIT_URL_ARG_SUBCOMMANDS or subcommand == 'submodule':
-        positionals = [a for a in rest if not a.startswith('-')]
+        positionals = extract_positionals(rest)
         if subcommand == 'submodule':
             if not positionals or positionals[0] != 'add':
                 return None
@@ -144,7 +184,7 @@ def find_git_violation(args, cwd: str, allowed_owners):
             return None
 
     elif subcommand == 'remote':
-        positionals = [a for a in rest if not a.startswith('-')]
+        positionals = extract_positionals(rest)
         if len(positionals) >= 3 and positionals[0] in ('add', 'set-url'):
             url = positionals[2]
             owner = owner_from_github_url(url) if is_url_like(url) else None
@@ -152,7 +192,7 @@ def find_git_violation(args, cwd: str, allowed_owners):
             return None
 
     elif subcommand in GIT_REMOTE_URL_SUBCOMMANDS:
-        positionals = [a for a in rest if not a.startswith('-')]
+        positionals = extract_positionals(rest)
         target = positionals[0] if positionals else None
         if target and is_url_like(target):
             owner = owner_from_github_url(target)
