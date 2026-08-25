@@ -19,7 +19,15 @@ source "$SCRIPT_DIR/lib/gum-utils.sh"
 
 # Detect update mode
 UPDATE_MODE=false
-if [ -f "$HOME/.zshrc" ] && grep -q "oh-my-posh" "$HOME/.zshrc" 2>/dev/null; then
+for arg in "$@"; do
+    if [ "$arg" = "--update" ]; then
+        UPDATE_MODE=true
+        log info "Running in UPDATE mode (--update flag)"
+        break
+    fi
+done
+
+if [ "$UPDATE_MODE" != true ] && [ -f "$HOME/.zshrc" ] && grep -q "oh-my-posh" "$HOME/.zshrc" 2>/dev/null; then
     log_banner rounded "Existing setup detected!" "This appears to be a machine that has already been set up."
 
     if confirm "Run in UPDATE mode? (won't overwrite configs)"; then
