@@ -200,13 +200,26 @@ def find_gh_violation(args, cwd: str, allowed_owners):
 
     if subcommand == 'api':
         path = positionals[0] if positionals else None
-        if path:
-            match = API_REPOS_PATH_RE.search(path)
-            if match:
-                owner = match.group(1).lower()
-                if owner not in allowed_owners:
-                    return f"gh api targets github.com/{owner}"
-        return None
+        if not path:
+            return "gh api with no path is not owner-scoped"
+
+        normalized = path.strip().lstrip('/')
+        first_segment = normalized.split('?', 1)[0].split('/', 1)[0].lower()
+        if first_segment == 'graphql':
+            # GraphQL has no owner in the URL, so it can reach any repo/org
+            # visible to the token regardless of path scoping. Hard-block it.
+            return "gh api graphql is not owner-scoped and is blocked"
+
+        match = API_REPOS_PATH_RE.search(path)
+        if match:
+            owner = match.group(1).lower()
+            if owner not in allowed_owners:
+                return f"gh api targets github.com/{owner}"
+            return None
+
+        # Default deny: any path we don't recognize as repos/<owner>/...
+        # is not owner-scoped (e.g. orgs/<org>/repos, /user, /installation/*).
+        return f"gh api path '{path}' is not a recognized repos/<owner>/... path"
 
     owner = resolve_repo_owner(cwd)
     if owner and owner not in allowed_owners:
