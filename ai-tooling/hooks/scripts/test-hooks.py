@@ -10,6 +10,14 @@ from pathlib import Path
 
 HOOKS_DIR = Path(__file__).parent
 PLUGIN_ROOT = HOOKS_DIR.parent
+AI_TOOLING_DIR = PLUGIN_ROOT.parent
+CLAUDE_SETTINGS = AI_TOOLING_DIR / 'claude-settings.json'
+CODEX_HOOKS = AI_TOOLING_DIR / 'codex-hooks.json'
+
+# Harness-specific home-dir prefixes that hook commands use to invoke
+# scripts. Normalizing these out is what lets the two hand-maintained
+# settings files be compared for drift below.
+HARNESS_PREFIXES = ('~/.claude/', '~/.codex/')
 
 
 def test_hook(hook_name, test_input):
@@ -35,6 +43,74 @@ def test_hook(hook_name, test_input):
         }
     except Exception as e:
         return False, str(e)
+
+
+def _normalize_hook_wiring(hooks_block):
+    """Strip the harness home-dir prefix from every hook command so wiring
+    can be compared across claude-settings.json and codex-hooks.json."""
+    normalized = {}
+    for event, matchers in hooks_block.items():
+        norm_matchers = []
+        for matcher_entry in matchers:
+            norm_hooks = []
+            for hook in matcher_entry.get('hooks', []):
+                command = hook.get('command', '')
+                for prefix in HARNESS_PREFIXES:
+                    command = command.replace(prefix, '~/<harness>/')
+                norm_hooks.append({
+                    'type': hook.get('type'),
+                    'command': command,
+                    'timeout': hook.get('timeout'),
+                })
+            norm_matchers.append({
+                'matcher': matcher_entry.get('matcher'),
+                'hooks': norm_hooks,
+            })
+        normalized[event] = norm_matchers
+    return normalized
+
+
+def check_hook_parity():
+    """Diff claude-settings.json and codex-hooks.json hook wiring, modulo the
+    ~/.claude/ vs ~/.codex/ home-dir prefix.
+
+    These two files hand-duplicate the same matchers/scripts/timeouts with no
+    generator keeping them in lockstep, so this catches an event edited in
+    one file and forgotten in the other. Events that only exist in one file
+    (e.g. a harness without an equivalent hook type) are reported but not
+    treated as a failure -- only mismatches within events both files define
+    are.
+    """
+    if not CLAUDE_SETTINGS.is_file() or not CODEX_HOOKS.is_file():
+        return False, f"Missing {CLAUDE_SETTINGS} or {CODEX_HOOKS}"
+
+    with open(CLAUDE_SETTINGS) as f:
+        claude_hooks = _normalize_hook_wiring(json.load(f).get('hooks', {}))
+    with open(CODEX_HOOKS) as f:
+        codex_hooks = _normalize_hook_wiring(json.load(f).get('hooks', {}))
+
+    shared = sorted(set(claude_hooks) & set(codex_hooks))
+    only_claude = sorted(set(claude_hooks) - set(codex_hooks))
+    only_codex = sorted(set(codex_hooks) - set(claude_hooks))
+
+    diverged = [event for event in shared if claude_hooks[event] != codex_hooks[event]]
+
+    notes = []
+    if only_claude:
+        notes.append(f"events only in claude-settings.json: {only_claude}")
+    if only_codex:
+        notes.append(f"events only in codex-hooks.json: {only_codex}")
+
+    if diverged:
+        detail = f"Hook wiring diverged for shared event(s) {diverged}"
+        if notes:
+            detail += " (" + '; '.join(notes) + ")"
+        return False, detail
+
+    message = "Shared hook wiring matches modulo home-dir prefix"
+    if notes:
+        message += " (" + '; '.join(notes) + ")"
+    return True, message
 
 
 def main():
@@ -192,8 +268,18 @@ def main():
                 print(f"   Error: {result['stderr'].strip()}")
             failed += 1
 
+    print(f"\n📋 Test: claude-settings.json / codex-hooks.json parity")
+    parity_ok, parity_message = check_hook_parity()
+    if parity_ok:
+        print(f"   ✅ PASSED: {parity_message}")
+        passed += 1
+    else:
+        print(f"   ❌ FAILED: {parity_message}")
+        failed += 1
+    total_tests = len(tests) + 1
+
     print("\n" + "=" * 60)
-    print(f"\n📊 Results: {passed} passed, {failed} failed out of {len(tests)} tests")
+    print(f"\n📊 Results: {passed} passed, {failed} failed out of {total_tests} tests")
 
     if failed == 0:
         print("✅ All hooks are working correctly!\n")
