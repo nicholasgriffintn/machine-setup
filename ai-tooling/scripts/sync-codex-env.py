@@ -82,6 +82,10 @@ def sync(desired, config_path):
         new_lines = lines[:section_start + 1] + section_lines + lines[section_end:]
 
     if changed:
+        # write_text_atomic (ai-tooling/scripts/lib/secure_io.py) covers the
+        # same crash-safety this PR set out to fix -- temp file + os.replace
+        # -- and additionally chmods to 600, since this file carries the
+        # same live credentials as claude-settings.local.json.
         write_text_atomic(config_path, '\n'.join(new_lines) + '\n')
     return changed
 
