@@ -3,8 +3,9 @@
 Mints a fresh GitHub App installation token and writes it into
 claude-settings.json's "env" block as GH_TOKEN, syncing to Codex too.
 
-gh CLI reads GH_TOKEN directly, bypassing its own stored auth entirely --
-this is what lets gh operate as the bot instead of needing `gh auth login`.
+The ~/.local/bin/gh wrapper reads the refreshed GH_TOKEN from the local
+overlay for every invocation, bypassing its own stored auth entirely. This
+keeps long-running Claude and Codex sessions from retaining an expired token.
 Installation tokens expire in ~1hr, so this is meant to run on a schedule
 (see the launchd agent installed by sync-symlinks.sh), not just once.
 """

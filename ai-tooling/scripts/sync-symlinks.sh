@@ -23,6 +23,7 @@ AI_TOOLING_MAPPINGS=(
     "~/.codex/AGENTS.md:INSTRUCTIONS.md"
     "~/.codex/hooks:hooks"
     "~/.codex/hooks.json:codex-hooks.json"
+    "~/.local/bin/gh:scripts/gh_wrapper.py"
     "~/.copilot/agents:agents"
     "~/.copilot/skills:skills"
     "~/.copilot/copilot-instructions.md:INSTRUCTIONS.md"
