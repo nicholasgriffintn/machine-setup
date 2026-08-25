@@ -78,7 +78,7 @@ class GhWrapperTest(unittest.TestCase):
         gh_wrapper.refresh_token()
 
         run.assert_called_once_with(
-            [gh_wrapper.sys.executable, str(gh_wrapper.REFRESH_SCRIPT)],
+            [gh_wrapper.sys.executable, str(gh_wrapper.REFRESH_SCRIPT), '--if-stale'],
             check=True,
             stdout=gh_wrapper.subprocess.DEVNULL,
         )

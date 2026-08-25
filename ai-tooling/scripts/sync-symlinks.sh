@@ -76,6 +76,7 @@ for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     fi
 done
 
+python3 "$AI_TOOLING_DIR/scripts/ensure-local-bin-path.py"
 python3 "$AI_TOOLING_DIR/scripts/render-claude-settings.py"
 
 if [ -f "$HOME/.codex/config.toml" ]; then

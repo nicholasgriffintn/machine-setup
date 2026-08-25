@@ -41,7 +41,7 @@ def token_is_stale(settings_path: Path, now: Optional[float] = None) -> bool:
 
 def refresh_token() -> None:
     subprocess.run(
-        [sys.executable, str(REFRESH_SCRIPT)],
+        [sys.executable, str(REFRESH_SCRIPT), '--if-stale'],
         check=True,
         stdout=subprocess.DEVNULL,
     )
