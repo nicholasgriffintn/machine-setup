@@ -209,10 +209,10 @@ def find_scope_violation(command: str, cwd: str, allowed_owners):
         if not segment or ('git' not in segment and 'gh' not in segment):
             continue
 
-        try:
-            tokens = shlex.split(segment)
-        except ValueError:
-            continue
+        # Let ValueError (e.g. unbalanced quotes) propagate to main()'s
+        # catch-all, which fails CLOSED. Swallowing it here would let an
+        # unparseable segment slip through unscoped.
+        tokens = shlex.split(segment)
 
         tokens = strip_env_assignments(tokens)
         if not tokens:
