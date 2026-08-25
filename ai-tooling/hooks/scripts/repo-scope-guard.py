@@ -73,9 +73,8 @@ GH_REPO_TARGET_ACTIONS = {
 
 # Wrapping git/gh in one of these (`bash -c "git push ..."`, or invoking
 # `/usr/bin/git` instead of bare `git`) must not skip scope checking.
-SHELL_WRAPPER_BASENAMES = {'bash', 'sh', 'zsh', 'dash'}
+SHELL_WRAPPER_BASENAMES = {'bash', 'sh', 'zsh', 'dash', 'ksh'}
 MAX_RECURSION_DEPTH = 5
-
 
 def owner_from_github_url(url: str):
     match = GITHUB_HOST_RE.match(url.strip())
