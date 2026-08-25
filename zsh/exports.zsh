@@ -5,6 +5,11 @@ export KEYTIMEOUT=1
 export ZSH_TMUX_FIXTERM=true
 export WORKSPACE_DIR=~/workspace
 
+# Prefer machine-setup command shims, including the fresh-token gh wrapper.
+typeset -U path
+path=("$HOME/.local/bin" $path)
+export PATH
+
 # Locale
 export LANG=en_GB.UTF-8
 export LC_ALL=en_GB.UTF-8

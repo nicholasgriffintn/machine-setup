@@ -40,7 +40,11 @@ def token_is_stale(settings_path: Path, now: Optional[float] = None) -> bool:
 
 
 def refresh_token() -> None:
-    subprocess.run([sys.executable, str(REFRESH_SCRIPT)], check=True)
+    subprocess.run(
+        [sys.executable, str(REFRESH_SCRIPT)],
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
 
 
 def find_real_gh(path_value: str, wrapper_path: Path) -> Path:

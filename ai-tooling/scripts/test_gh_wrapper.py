@@ -5,6 +5,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).with_name('gh_wrapper.py')
@@ -71,6 +72,16 @@ class GhWrapperTest(unittest.TestCase):
         self.assertEqual(child['GH_TOKEN'], 'fresh')
         self.assertNotIn('GITHUB_TOKEN', child)
         self.assertEqual(original['GH_TOKEN'], 'expired')
+
+    @mock.patch.object(gh_wrapper.subprocess, 'run')
+    def test_refresh_does_not_contaminate_gh_stdout(self, run):
+        gh_wrapper.refresh_token()
+
+        run.assert_called_once_with(
+            [gh_wrapper.sys.executable, str(gh_wrapper.REFRESH_SCRIPT)],
+            check=True,
+            stdout=gh_wrapper.subprocess.DEVNULL,
+        )
 
 
 if __name__ == '__main__':
