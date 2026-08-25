@@ -96,6 +96,9 @@ def find_git_violation(args, cwd: str, allowed_owners):
     i = 0
     while i < len(args) and args[i].startswith('-'):
         if args[i] == '-C' and i + 1 < len(args):
+            # Like git itself, a relative -C path is resolved against the
+            # previous effective directory, so multiple -C flags accumulate.
+            cwd = str((Path(cwd) / args[i + 1]).resolve())
             i += 2
         else:
             i += 1
