@@ -25,10 +25,19 @@ OWNER_REPO_RE = re.compile(r'^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$')
 API_REPOS_PATH_RE = re.compile(r'(?:^|/)repos/([^/]+)/[^/]+')
 
 GIT_SAFE_SUBCOMMANDS = {
-    '--version', '-v', '--help', 'help', 'init', 'config', 'version',
+    '--version', '-v', '--help', 'help', 'init', 'version',
 }
 GIT_URL_ARG_SUBCOMMANDS = {'clone', 'ls-remote'}
 GIT_REMOTE_URL_SUBCOMMANDS = {'push', 'pull', 'fetch'}
+
+# `url.*.insteadOf` / `url.*.pushInsteadOf` silently rewrite the destination of
+# an already-vetted `git push`/`fetch`/`clone`, and `credential.*` can redirect
+# where credentials are sent -- so `git config` is never treated as safe when it
+# touches one of these keys, regardless of whether it's a read, write, or unset.
+GIT_DANGEROUS_CONFIG_KEY_RE = re.compile(
+    r'^url\..*\.(?:insteadof|pushinsteadof)(?:=.*)?$|^credential\.',
+    re.IGNORECASE,
+)
 
 GH_SAFE_SUBCOMMANDS = {
     'auth', 'config', 'alias', 'extension', 'completion', 'help',
@@ -81,14 +90,20 @@ def run_git(cwd: str, *args):
     return result.stdout.strip()
 
 
-def resolve_repo_owner(cwd: str):
-    """Resolve the GitHub owner of `origin` for the repo at cwd, if any."""
-    url = run_git(cwd, 'remote', 'get-url', 'origin')
+def resolve_repo_owner(cwd: str, push: bool = False):
+    """Resolve the GitHub owner of `origin` for the repo at cwd, if any.
+
+    `push=True` asks git for the effective *push* URL (`--push`), which
+    reflects `pushInsteadOf` rewrites that a plain `get-url` does not.
+    """
+    args = ('remote', 'get-url', '--push', 'origin') if push else ('remote', 'get-url', 'origin')
+    url = run_git(cwd, *args)
     return owner_from_github_url(url) if url else None
 
 
-def resolve_named_remote_owner(cwd: str, name: str):
-    url = run_git(cwd, 'remote', 'get-url', name)
+def resolve_named_remote_owner(cwd: str, name: str, push: bool = False):
+    args = ('remote', 'get-url', '--push', name) if push else ('remote', 'get-url', name)
+    url = run_git(cwd, *args)
     return owner_from_github_url(url) if url else None
 
 
@@ -107,6 +122,17 @@ def find_git_violation(args, cwd: str, allowed_owners):
     rest = args[1:]
 
     if subcommand in GIT_SAFE_SUBCOMMANDS:
+        return None
+
+    if subcommand == 'config':
+        for tok in rest:
+            candidate = tok[2:] if tok.startswith('--') else tok
+            if GIT_DANGEROUS_CONFIG_KEY_RE.search(candidate):
+                return (
+                    "git config sets a url.*.insteadOf/pushInsteadOf or "
+                    "credential.* override, which can silently redirect an "
+                    "already-approved git operation"
+                )
         return None
 
     owner = None
@@ -132,14 +158,15 @@ def find_git_violation(args, cwd: str, allowed_owners):
             return None
 
     elif subcommand in GIT_REMOTE_URL_SUBCOMMANDS:
+        is_push = subcommand == 'push'
         positionals = [a for a in rest if not a.startswith('-')]
         target = positionals[0] if positionals else None
         if target and is_url_like(target):
             owner = owner_from_github_url(target)
         elif target:
-            owner = resolve_named_remote_owner(cwd, target)
+            owner = resolve_named_remote_owner(cwd, target, push=is_push)
         else:
-            owner = resolve_repo_owner(cwd)
+            owner = resolve_repo_owner(cwd, push=is_push)
 
     else:
         owner = resolve_repo_owner(cwd)
@@ -226,10 +253,12 @@ def find_scope_violation(command: str, cwd: str, allowed_owners):
             continue
 
         if reason:
-            return (
-                f"{reason}, which is outside the allowed owner(s) "
-                f"({', '.join(sorted(allowed_owners))})."
-            )
+            if 'targets github.com/' in reason:
+                return (
+                    f"{reason}, which is outside the allowed owner(s) "
+                    f"({', '.join(sorted(allowed_owners))})."
+                )
+            return f"{reason}."
 
     return None
 
