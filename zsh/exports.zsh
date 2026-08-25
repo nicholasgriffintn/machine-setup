@@ -41,9 +41,6 @@ export ZSH_CACHE_DIR="$HOME/.cache/zsh"
 # Style Zsh Autosuggestions
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=60'
 
-# Enable async prompt updates for better performance
-export POSH_GIT_ENABLED=true
-
 # rbenv initialization
 if command -v rbenv &>/dev/null; then
   eval "$(rbenv init - zsh)"

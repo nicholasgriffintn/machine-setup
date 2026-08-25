@@ -60,7 +60,7 @@ alias dirs='dirs -v'  # Show directory stack
 # Directory hashing for quick navigation
 hash -d workspace=~/workspace
 hash -d github=~/Documents/GitHub
-hash -d setup=~/Documents/GitHub/machine-setup
+hash -d setup="$WORKSPACE_DIR/machine-setup"
 
 # Git shortcuts
 alias gs='git status'
@@ -78,7 +78,7 @@ alias d='docker'
 alias dc='docker-compose'
 alias dps='docker ps'
 alias dimg='docker images'
-alias dclean='docker system prune -af --volumes'
+alias dclean='dclean-safe'  # confirms before wiping volumes/build cache; see functions.zsh
 alias dstop='docker stop $(docker ps -aq)'
 alias drm='docker rm $(docker ps -aq)'
 alias dlogs='docker logs -f'
