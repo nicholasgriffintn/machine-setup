@@ -269,14 +269,8 @@ if [ -d "$SCRIPT_DIR/ai-tooling" ]; then
     bash "$SCRIPT_DIR/ai-tooling/scripts/sync-symlinks.sh"
 fi
 
-# Machine-local env vars, kept out of this repo, sourced by zshrc-template.
-LOCAL_ENV_FILE="$HOME/.zshrc.local"
-if ! grep -q '.zshrc.local' "$HOME/.zshrc" 2>/dev/null; then
-    printf '\n# Machine-local env vars (not tracked by this repo) -- see machine-setup.sh\n[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"\n' >> "$HOME/.zshrc"
-    log success "Added .zshrc.local sourcing to .zshrc"
-fi
-
-if ! grep -q '^export GITHUB_APP_ID=' "$LOCAL_ENV_FILE" 2>/dev/null; then
+GITHUB_APP_SETTINGS_KEY='"GITHUB_APP_ID"'
+if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! grep -q "$GITHUB_APP_SETTINGS_KEY" "$SCRIPT_DIR/ai-tooling/claude-settings.json"; then
     log_banner rounded \
         "GitHub App bot identity (Nicholas' Clanker)" \
         "" \
@@ -286,7 +280,7 @@ if ! grep -q '^export GITHUB_APP_ID=' "$LOCAL_ENV_FILE" 2>/dev/null; then
 
     if confirm "Set it up now?"; then
         APP_ID=$(input "GitHub App ID (from the app's General settings page):" "")
-        DEFAULT_KEY_PATH="$HOME/.config/github-app/nicholas-clanker.pem"
+        DEFAULT_KEY_PATH="$HOME/.config/machine-setup/nicholas-clanker.pem"
         KEY_PATH=$(input "Path to the downloaded private key (.pem):" "$DEFAULT_KEY_PATH")
         KEY_PATH="${KEY_PATH/#\~/$HOME}"
 
@@ -297,12 +291,12 @@ if ! grep -q '^export GITHUB_APP_ID=' "$LOCAL_ENV_FILE" 2>/dev/null; then
             log warn "No file found at $KEY_PATH yet -- saving the path anyway, add the key there when ready"
         fi
 
-        {
-            echo "export GITHUB_APP_ID=$APP_ID"
-            echo "export GITHUB_APP_PRIVATE_KEY_PATH=$KEY_PATH"
-        } >> "$LOCAL_ENV_FILE"
-        chmod 600 "$LOCAL_ENV_FILE"
-        log success "Saved to $LOCAL_ENV_FILE -- open a new shell (or AI harness session) to pick it up"
+        python3 "$SCRIPT_DIR/ai-tooling/scripts/set-ai-env.py" \
+            "GITHUB_APP_ID=$APP_ID" \
+            "GITHUB_APP_PRIVATE_KEY_PATH=$KEY_PATH"
+        [ -f "$HOME/.codex/config.toml" ] && python3 "$SCRIPT_DIR/ai-tooling/scripts/sync-codex-env.py"
+        bash "$SCRIPT_DIR/ai-tooling/scripts/install-gh-token-refresher.sh"
+        log success "Saved -- Claude Code and Codex pick this up on their very next tool call, no new shell needed"
     else
         log warn "Skipped -- rerun machine-setup.sh --update any time to set it up"
     fi

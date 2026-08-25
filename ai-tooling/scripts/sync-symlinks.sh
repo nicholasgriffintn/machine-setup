@@ -19,7 +19,6 @@ AI_TOOLING_MAPPINGS=(
     "~/.claude/commands:commands"
     "~/.claude/skills:skills"
     "~/.claude/CLAUDE.md:INSTRUCTIONS.md"
-    "~/.claude/settings.json:claude-settings.json"
     "~/.codex/skills:skills"
     "~/.codex/AGENTS.md:INSTRUCTIONS.md"
     "~/.codex/hooks:hooks"
@@ -71,6 +70,13 @@ for mapping in "${AI_TOOLING_MAPPINGS[@]}"; do
     fi
 done
 
+python3 "$AI_TOOLING_DIR/scripts/render-claude-settings.py"
+
 if [ -f "$HOME/.codex/config.toml" ]; then
     python3 "$AI_TOOLING_DIR/scripts/sync-codex-env.py"
+fi
+
+GITHUB_APP_SETTINGS_KEY='"GITHUB_APP_ID"'
+if grep -q "$GITHUB_APP_SETTINGS_KEY" "$AI_TOOLING_DIR/claude-settings.json" 2>/dev/null; then
+    bash "$AI_TOOLING_DIR/scripts/install-gh-token-refresher.sh"
 fi

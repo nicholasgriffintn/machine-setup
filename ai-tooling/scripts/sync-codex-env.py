@@ -17,6 +17,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CLAUDE_SETTINGS = REPO_ROOT / 'ai-tooling' / 'claude-settings.json'
+CLAUDE_SETTINGS_LOCAL = REPO_ROOT / 'ai-tooling' / 'claude-settings.local.json'
 CODEX_CONFIG = Path.home() / '.codex' / 'config.toml'
 SECTION_HEADER = '[shell_environment_policy.set]'
 
@@ -24,6 +25,9 @@ SECTION_HEADER = '[shell_environment_policy.set]'
 def load_desired_env():
     with open(CLAUDE_SETTINGS) as f:
         env = json.load(f).get('env', {})
+    if CLAUDE_SETTINGS_LOCAL.is_file():
+        with open(CLAUDE_SETTINGS_LOCAL) as f:
+            env.update(json.load(f).get('env', {}))
     return {k: v.replace('~/.claude/', '~/.codex/') if isinstance(v, str) else v
             for k, v in env.items()}
 
