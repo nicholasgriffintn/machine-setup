@@ -11,8 +11,10 @@ truth for both harnesses), rewriting only that section and leaving
 everything else in config.toml untouched.
 """
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -75,8 +77,22 @@ def sync(desired, config_path):
         new_lines = lines[:section_start + 1] + section_lines + lines[section_end:]
 
     if changed:
-        config_path.write_text('\n'.join(new_lines) + '\n')
+        _atomic_write(config_path, '\n'.join(new_lines) + '\n')
     return changed
+
+
+def _atomic_write(path, text):
+    """Write via temp file + os.replace so a kill/crash mid-write can never
+    leave Codex's live config.toml (project trust list, per-hook consent
+    tracking) truncated or partially written."""
+    fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=f'.{path.name}.', suffix='.tmp')
+    try:
+        with os.fdopen(fd, 'w') as f:
+            f.write(text)
+        os.replace(tmp_path, path)
+    except BaseException:
+        os.unlink(tmp_path)
+        raise
 
 
 def main():
