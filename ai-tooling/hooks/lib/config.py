@@ -30,6 +30,11 @@ def get_protected_patterns() -> Tuple[List[str], List[str]]:
         '**/secrets/*',
         '**/credentials/*',
         '.git/*',
+        # The guardrail system itself: if an agent (or a prompt-injected
+        # session) can edit these, it can disable every check below.
+        'ai-tooling/claude-settings.json',
+        'ai-tooling/hooks/*',
+        'ai-tooling/scripts/*',
     ]
 
     warned = [
