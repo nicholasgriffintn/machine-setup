@@ -314,7 +314,7 @@ if [ -f "$SCRIPT_DIR/ai-tooling/claude-settings.json" ] && ! grep -qE "$GITHUB_A
         bash "$SCRIPT_DIR/ai-tooling/scripts/install-gh-token-refresher.sh"
         log success "Saved -- Claude Code and Codex pick this up on their very next tool call, no new shell needed"
     else
-        log warn "Skipped -- rerun machine-setup.sh --update any time to set it up"
+        log warn "Skipped -- rerun machine-setup.sh any time; it will detect the existing setup and offer to set it up"
     fi
 fi
 

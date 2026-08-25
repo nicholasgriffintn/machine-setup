@@ -9,7 +9,11 @@ directly in a git-tracked file. The overlay keeps secrets out of git while
 still reaching the live file every AI harness actually reads.
 """
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib.secure_io import write_json_atomic  # noqa: E402
 
 AI_TOOLING_DIR = Path(__file__).resolve().parent.parent
 BASE = AI_TOOLING_DIR / 'claude-settings.json'
@@ -29,9 +33,7 @@ def main():
     if TARGET.is_symlink():
         TARGET.unlink()
 
-    with open(TARGET, 'w') as f:
-        json.dump(settings, f, indent=2)
-        f.write('\n')
+    write_json_atomic(TARGET, settings)
 
     print(f"Rendered {TARGET}")
 
