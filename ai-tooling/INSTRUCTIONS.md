@@ -76,7 +76,10 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Git
 
-- Commit, push, and open PRs freely as a normal part of finishing a task — no need to ask first. All git actions run as the "Nicholas' Clanker" bot identity (separate GitHub App, own credentials, own commit authorship), not as the user directly.
+- Leave finished work as commits on a task branch. Ask before pushing or opening a PR, and wait for a clear yes. All git actions run as the "Nicholas' Clanker" bot identity (separate GitHub App, own credentials, own commit authorship), not as the user directly.
+- Create the task branch with `git switch -c <name>` before staging anything. Never use `git branch -m`, `-M`, `-d`, or `-D` on an existing branch.
+- Ask before any command that rewrites or discards existing state: `reset --hard`, `rebase`, `checkout -- <path>`, `clean`, `stash drop`, `filter-branch`, or any `--force`/`-f` push.
+- Run `git status` and `git branch --show-current` before the first state-changing command in a task. Do not assume which branch you are on.
 - Do not merge PRs yourself. Opening one is fine; merging still needs explicit human approval.
 - Keep commit messages short and use conventional commits.
 - Use `gh` CLI for GitHub operations.
