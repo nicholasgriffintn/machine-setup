@@ -84,25 +84,6 @@ def get_secret_patterns() -> Tuple[List[Tuple[str, str]], set]:
     return patterns, skip_files
 
 
-def get_formatters() -> Dict[str, Dict[str, Any]]:
-    """Get formatter configuration."""
-    return {
-        '.js': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.jsx': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.ts': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.tsx': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.json': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.css': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.scss': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.md': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.yaml': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.yml': {'command': ['npx', 'prettier', '--write'], 'timeout': 10},
-        '.py': {'command': ['black', '--quiet'], 'timeout': 10},
-        '.go': {'command': ['gofmt', '-w'], 'timeout': 10},
-        '.rs': {'command': ['rustfmt'], 'timeout': 10},
-    }
-
-
 def get_agent_hints() -> Tuple[Dict[str, str], List[Tuple[str, str]]]:
     """Get agent hints and dangerous patterns."""
     hints = {

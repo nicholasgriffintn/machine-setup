@@ -8,13 +8,12 @@ Original Source: https://github.com/CloudAI-X/claude-workflow
 import sys
 import os
 import subprocess
-import shutil
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
 
 from base_hook import BaseHook
-from config import get_formatters
+from formatter_detection import detect_formatter, find_repository_root, resolve_file_path
 
 
 class FormatOnEditHook(BaseHook):
@@ -22,46 +21,42 @@ class FormatOnEditHook(BaseHook):
 
     def __init__(self):
         super().__init__('format-on-edit')
-        self.formatters = get_formatters()
 
     def execute(self) -> int:
         file_path = self.get_file_path()
 
-        if not file_path or not os.path.exists(file_path):
+        if not file_path:
             return 0
 
-        ext = os.path.splitext(file_path)[1].lower()
-        formatter_config = self.formatters.get(ext)
-
-        if not formatter_config:
+        project_dir = os.environ.get('CLAUDE_PROJECT_DIR') or os.environ.get('CODEX_PROJECT_DIR')
+        resolved_file = resolve_file_path(file_path, project_dir)
+        if not resolved_file.is_file():
             return 0
 
-        command = formatter_config.get('command', [])
-        timeout = formatter_config.get('timeout', 10)
-
-        if not command:
+        repository_root = find_repository_root(resolved_file, project_dir)
+        if not repository_root:
             return 0
 
-        formatter_bin = command[0]
-        if not shutil.which(formatter_bin):
+        formatter = detect_formatter(resolved_file, repository_root)
+        if not formatter:
             return 0
 
         try:
-            cmd = command + [file_path]
             result = subprocess.run(
-                cmd,
+                formatter.args,
                 capture_output=True,
-                timeout=timeout,
-                text=True
+                timeout=formatter.timeout,
+                text=True,
+                cwd=formatter.cwd,
             )
 
             if result.returncode != 0 and result.stderr:
-                self.log_error(f"Formatter failed for {file_path}: {result.stderr}")
+                self.log_error(f"Formatter failed for {resolved_file}: {result.stderr}")
 
         except subprocess.TimeoutExpired:
-            self.log_error(f"Formatter timeout for {file_path}")
+            self.log_error(f"Formatter timeout for {resolved_file}")
         except Exception as e:
-            self.log_error(f"Formatter error for {file_path}: {str(e)}")
+            self.log_error(f"Formatter error for {resolved_file}: {str(e)}")
 
         return 0
 
