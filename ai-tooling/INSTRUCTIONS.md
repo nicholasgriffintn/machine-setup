@@ -38,7 +38,7 @@ Central principles for agents, skills, and commands. Reference this file in your
 - Bias toward fewer tests that matter.
 - Prefer integration tests that cover validation, state transitions, and error handling.
 - Avoid unit tests that only verify language features.
-- New code needs coverage.
+- Do not add a test solely because code is new. Every test must protect observable behaviour, a meaningful invariant, or a real regression rather than restating the implementation.
 - Test edge cases and error paths.
 - Do not start dev servers for routine validation.
 - Prefer static checks, typechecks, builds, and test commands over live-server smoke tests.
@@ -76,8 +76,10 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Git
 
-- Leave finished work as commits on a task branch. Ask before pushing or opening a PR, and wait for a clear yes. All git actions run as the "Nicholas' Clanker" bot identity (separate GitHub App, own credentials, own commit authorship), not as the user directly.
-- Create the task branch with `git switch -c <name>` before staging anything. Never use `git branch -m`, `-M`, `-d`, or `-D` on an existing branch.
+- Never create or switch branches in a shared or primary checkout. Do not leave the user's checkout on an agent-created branch.
+- Use a dedicated git worktree for task-branch isolation. Create or switch the task branch only inside that worktree. If no dedicated worktree exists and the user did not explicitly ask to create one, keep the current branch unchanged.
+- When a commit is required, commit on the branch already checked out in the current worktree. Ask before pushing or opening a PR, and wait for a clear yes. All git actions run as the "Nicholas' Clanker" bot identity (separate GitHub App, own credentials, own commit authorship), not as the user directly.
+- Never use `git branch -m`, `-M`, `-d`, or `-D` on an existing branch.
 - Ask before any command that rewrites or discards existing state: `reset --hard`, `rebase`, `checkout -- <path>`, `clean`, `stash drop`, `filter-branch`, or any `--force`/`-f` push.
 - Run `git status` and `git branch --show-current` before the first state-changing command in a task. Do not assume which branch you are on.
 - Do not merge PRs yourself. Opening one is fine; merging still needs explicit human approval.

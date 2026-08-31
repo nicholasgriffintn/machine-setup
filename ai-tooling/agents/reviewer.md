@@ -28,7 +28,8 @@ git log -3 --oneline
 
 3.1 **Testing**:
 
-- [ ] New code has been covered by unit tests.
+- [ ] Every added test protects observable behaviour, a meaningful invariant, or a real regression.
+- [ ] No test merely restates the implementation or verifies that language/framework features work.
 - [ ] Existing tests have been updated to reflect changes.
 - [ ] Edge cases and error handling are tested.
 - [ ] The tests are sound and reliable.
