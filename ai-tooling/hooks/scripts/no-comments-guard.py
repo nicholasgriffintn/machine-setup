@@ -35,6 +35,7 @@ ALLOWED = (
 )
 
 SLASH_START = re.compile(r'^(//|/\*|\*/|\*(\s|$))')
+CD_PREFIX = re.compile(r"""\s*cd\s+(?P<path>"[^"]+"|'[^']+'|[^\s;&|]+)""")
 
 
 def comment_markers(path):
@@ -144,17 +145,28 @@ class NoCommentsGuard(BaseHook):
         if re.search(r'\bcommit\b[^|;&]*\s-[a-zA-Z]*a', command):
             ranges.append('HEAD')
 
+        workdir = self.command_workdir(command)
+
         findings = []
         for target in ranges:
-            findings.extend(self.diff_comments(target))
+            findings.extend(self.diff_comments(target, workdir))
 
         return report(findings) if findings else 0
 
-    def diff_comments(self, target):
+    def command_workdir(self, command):
+        match = re.match(CD_PREFIX, command)
+        if not match:
+            return self.input_data.get('cwd') or None
+        path = match.group('path').strip('"').strip("'")
+        expanded = Path(path).expanduser()
+
+        return str(expanded) if expanded.is_dir() else None
+
+    def diff_comments(self, target, workdir=None):
         try:
             diff = subprocess.run(
                 ['git', 'diff', '-U0', target],
-                capture_output=True, text=True, timeout=20,
+                capture_output=True, text=True, timeout=20, cwd=workdir,
             )
         except (OSError, subprocess.SubprocessError):
             return []

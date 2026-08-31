@@ -14,6 +14,11 @@
             "type": "command",
             "command": "python3 ~/.claude/hooks/scripts/security-check.py",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/scripts/no-comments-guard.py",
+            "timeout": 10
           }
         ]
       },
@@ -28,6 +33,11 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/scripts/repo-scope-guard.py",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/scripts/no-comments-guard.py",
             "timeout": 10
           }
         ]
