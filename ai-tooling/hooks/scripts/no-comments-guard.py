@@ -146,12 +146,37 @@ class NoCommentsGuard(BaseHook):
             ranges.append('HEAD')
 
         workdir = self.command_workdir(command)
+        incoming = self.incoming_parent(workdir)
 
         findings = []
         for target in ranges:
             findings.extend(self.diff_comments(target, workdir))
 
+        if incoming:
+            already_upstream = {
+                (location.rsplit(':', 1)[0], text)
+                for location, text in self.diff_comments(incoming, workdir, cached=True)
+            }
+            findings = [
+                (location, text)
+                for location, text in findings
+                if (location.rsplit(':', 1)[0], text) in already_upstream
+            ]
+
         return report(findings) if findings else 0
+
+    def incoming_parent(self, workdir=None):
+        for ref in ('MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD'):
+            try:
+                result = subprocess.run(
+                    ['git', 'rev-parse', '--verify', '--quiet', ref],
+                    capture_output=True, text=True, timeout=10, cwd=workdir,
+                )
+            except (OSError, subprocess.SubprocessError):
+                return None
+            if result.returncode == 0 and result.stdout.strip():
+                return ref
+        return None
 
     def command_workdir(self, command):
         match = re.match(CD_PREFIX, command)
@@ -162,10 +187,14 @@ class NoCommentsGuard(BaseHook):
 
         return str(expanded) if expanded.is_dir() else None
 
-    def diff_comments(self, target, workdir=None):
+    def diff_comments(self, target, workdir=None, cached=False):
+        args = ['git', 'diff', '-U0']
+        if cached:
+            args.append('--cached')
+        args.append(target)
         try:
             diff = subprocess.run(
-                ['git', 'diff', '-U0', target],
+                args,
                 capture_output=True, text=True, timeout=20, cwd=workdir,
             )
         except (OSError, subprocess.SubprocessError):
