@@ -11,8 +11,7 @@ Central principles for agents, skills, and commands. Reference this file in your
 - Route files should orchestrate data loading and composition.
 - If logic is non-trivial (state machine, parsing, measurement, timers, or >25–40 lines), extract it to a component/hook/lib module immediately.
 - Do not cast types to circumvent issues. Fix them properly.
-- Comments should explain why, not what.
-- Use comments sparingly for I/O, validation, and edge cases.
+- Do not add code comments unless the user explicitly asks for them.
 - Avoid introducing dependencies unless necessary and agreed upon.
 - When adding dependencies, use the project toolchain and include lockfiles in commits.
 
