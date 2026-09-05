@@ -150,7 +150,7 @@ INSTALLED_APPS=$(mas list 2>/dev/null | awk '{print $1}') || {
 if $HAS_GUM; then
     log info "Select Mac App Store applications to install:"
     SORTED_NAMES=($(printf '%s\n' "${MAS_APP_NAMES[@]}" | sort))
-    SELECTED_APPS=$(printf '%s\n' "${SORTED_NAMES[@]}" | gum choose --no-limit --header "Use space to select, enter to confirm")
+    SELECTED_APPS=$(printf '%s\n' "${SORTED_NAMES[@]}" | gum choose --no-limit --header "Use x to toggle, enter to confirm")
 
     if [ -n "$SELECTED_APPS" ]; then
         while IFS= read -r app_name; do
@@ -418,7 +418,7 @@ install_ai_tool() {
 echo ""
 if $HAS_GUM; then
     log info "Select AI CLI tools to install (optional):"
-    SELECTED_AI_TOOLS=$(printf '%s\n' "${AI_TOOLS[@]}" | gum choose --no-limit --header "Space to select, Enter to confirm (or just Enter to skip)")
+    SELECTED_AI_TOOLS=$(printf '%s\n' "${AI_TOOLS[@]}" | gum choose --no-limit --header "Use x to toggle, Enter to confirm (or just Enter to skip)")
 
     if [ -n "$SELECTED_AI_TOOLS" ]; then
         while IFS= read -r tool; do
