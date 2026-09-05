@@ -363,6 +363,7 @@ AI_TOOLS=(
     "GitHub Copilot CLI"
     "Gemini CLI"
     "OpenAI Codex"
+    "Pi Coding Agent"
     "OpenCode"
 )
 
@@ -395,6 +396,13 @@ install_ai_tool() {
                 spin "Installing OpenAI Codex..." brew install --cask codex || log warn "  OpenAI Codex install failed, continuing"
             else
                 log success "OpenAI Codex already installed"
+            fi
+            ;;
+        "Pi Coding Agent")
+            if ! command -v pi &> /dev/null; then
+                spin "Installing Pi Coding Agent..." bash -c 'curl -fsSL https://pi.dev/install.sh | sh' || log warn "  Pi Coding Agent install failed, continuing"
+            else
+                log success "Pi Coding Agent already installed"
             fi
             ;;
         "OpenCode")

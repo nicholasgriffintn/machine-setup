@@ -128,8 +128,8 @@ alias nrb='npm run build'
 alias nrt='npm run test'
 
 # pnpm equivalents
-alias pi='pnpm install'
-alias pid='pnpm install --save-dev'
+alias pni='pnpm install'
+alias pnid='pnpm install --save-dev'
 alias pr='pnpm run'
 alias prd='pnpm run dev'
 alias prb='pnpm run build'
