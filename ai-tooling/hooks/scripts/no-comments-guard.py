@@ -22,7 +22,7 @@ SLASH_EXTS = {
     '.php', '.css', '.scss', '.less', '.proto', '.gradle', '.groovy',
 }
 HASH_EXTS = {'.py', '.rb', '.sh', '.bash', '.zsh', '.fish', '.pl', '.r', '.ex', '.exs', '.jl'}
-DASH_EXTS = {'.sql', '.lua', '.hs', '.elm'}
+DASH_EXTS = {'.lua', '.hs', '.elm'}
 
 SKIP_PATH_PARTS = ('/node_modules/', '/dist/', '/build/', '/.git/', '/vendor/', '/.claude/')
 
