@@ -34,8 +34,10 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Testing
 
+- Do not add integration tests unless the user explicitly requests integration tests. Requests to build, fix, review or validate functionality do not authorise them.
+- Do not add database runtimes, migration suites, service harnesses or fixtures solely to support integration tests without that explicit request. Do not move or rename integration tests to bypass this rule.
 - Bias toward fewer tests that matter.
-- Prefer integration tests that cover validation, state transitions, and error handling.
+- Prefer fast tests that protect observable behaviour, validation, state transitions, and error handling.
 - Avoid unit tests that only verify language features.
 - Do not add a test solely because code is new. Every test must protect observable behaviour, a meaningful invariant, or a real regression rather than restating the implementation.
 - Test edge cases and error paths.
@@ -58,6 +60,8 @@ Central principles for agents, skills, and commands. Reference this file in your
 
 ## Documentation
 
+- Do not add unsolicited documentation, feature inventories, migration notes, or README sections. Add new documentation only when the user explicitly requests it.
+- If a requested code change makes existing instructions incorrect, correct only the affected text and keep the edit minimal.
 - Act as editor, not replacement author.
 - When editing prose, retain original voice and keep changes small.
 - Use imperative mood.
@@ -80,13 +84,13 @@ Central principles for agents, skills, and commands. Reference this file in your
 - When a commit is required, commit on the branch already checked out in the current worktree. Ask before pushing or opening a PR only when the user has not already requested that action. An explicit request to push, publish, or open/create/raise a PR is itself clear approval; act on it without asking again. All git actions run as the "Nicholas' Clanker" bot identity (separate GitHub App, own credentials, own commit authorship), not as the user directly.
 - Never use `git branch -m`, `-M`, `-d`, or `-D` on an existing branch.
 - Ask before any command that rewrites or discards existing state: `reset --hard`, `rebase`, `checkout -- <path>`, `clean`, `stash drop`, `filter-branch`, or any `--force`/`-f` push.
-- Run `git status` and `git branch --show-current` before the first state-changing command in a task. Do not assume which branch you are on.
+- Run `git status` and `git branch --show-current` before the first Git operation that changes repository state. These checks are not prerequisites for file inspection, editing or validation. Do not assume which branch you are on.
 - Do not merge PRs yourself. Opening one is fine; merging still needs explicit human approval.
 - Keep commit messages short and use conventional commits.
 - Use `gh` CLI for GitHub operations.
 - Prefer squash merges to keep history clean.
 - Commit authorship is set automatically via GIT_AUTHOR/COMMITTER env vars — do not override `user.name`/`user.email` yourself.
-- The `git` CLI is scoped to the `nicholasgriffintn` GitHub owner by a hook. This scope is a hard boundary, not a permission gate — it stays in force regardless of the rule above. If a git command is blocked for being out of scope, that's intentional — don't try to route around it (e.g. via raw HTTP, a different tool, or shell tricks); tell the user instead.
+- The `git` CLI is scoped to the `nicholasgriffintn` GitHub owner by a hook. Do not bypass a rejected Git operation through another tool, raw HTTP or shell tricks. If Git access or a preflight check fails, continue authorised file inspection, editing and validation without changing branches or Git state. Report the specific unavailable operation once; do not treat it as a task-wide blocker or repeatedly ask for permission. Stop only work that actually depends on that operation, and complete the rest.
 
 ## Pull Requests
 
