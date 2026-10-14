@@ -25,7 +25,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
 
 from config import get_allowed_git_owners  # noqa: E402
 
-SEGMENT_SPLIT_RE = re.compile(r'&&|\|\||[;|\n]')
 # Strip subshell/brace-group/command-substitution wrapping (e.g. `(git ...)`,
 # `{ git ...; }`, `` `git ...` ``, `$(git ...)`) from segment boundaries so
 # wrapped invocations still surface `git`/`gh` as the first token instead of
@@ -308,6 +307,55 @@ def find_gh_violation(args, cwd: str, allowed_owners):
     return None
 
 
+def split_segments(command: str):
+    """Split on &&, ||, ;, | and newlines outside quotes only. A quoted
+    separator (a `--jq '.[] | .x'` filter, a commit message with `;`) must
+    stay in its segment: splitting inside quotes hands shlex an unterminated
+    quote and blocks an otherwise in-scope command. An unbalanced quote is
+    left in the final segment so shlex still raises and the guard fails
+    closed."""
+    segments = []
+    current = []
+    quote = None
+    i = 0
+    n = len(command)
+    while i < n:
+        c = command[i]
+        if quote:
+            current.append(c)
+            if c == '\\' and quote == '"' and i + 1 < n:
+                current.append(command[i + 1])
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+            i += 1
+            continue
+        if c == '\\' and i + 1 < n:
+            current.append(command[i:i + 2])
+            i += 2
+            continue
+        if c in ('"', "'"):
+            quote = c
+            current.append(c)
+            i += 1
+            continue
+        if command.startswith('&&', i) or command.startswith('||', i):
+            segments.append(''.join(current))
+            current = []
+            i += 2
+            continue
+        if c in ';|\n':
+            segments.append(''.join(current))
+            current = []
+            i += 1
+            continue
+        current.append(c)
+        i += 1
+    segments.append(''.join(current))
+    return segments
+
+
 def find_matching_paren(text: str, open_idx: int):
     """`open_idx` is the index of an opening '(' in `text`. Returns the index
     of its matching ')' (accounting for nesting), or None if unbalanced."""
@@ -370,7 +418,7 @@ def find_scope_violation(command: str, cwd: str, allowed_owners, _depth: int = 0
             if reason:
                 return reason
 
-    for raw_segment in SEGMENT_SPLIT_RE.split(command):
+    for raw_segment in split_segments(command):
         segment = raw_segment.strip()
         segment = LEADING_WRAP_RE.sub('', segment)
         segment = TRAILING_WRAP_RE.sub('', segment)

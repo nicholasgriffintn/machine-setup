@@ -241,6 +241,38 @@ def main():
             }},
             'expected_exit': 0
         },
+        {
+            'name': 'repo-scope-guard (quoted pipe in --jq, own org)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': "gh pr list --repo nicholasgriffintn/foo --json number --jq '.[] | .number'"
+            }},
+            'expected_exit': 0
+        },
+        {
+            'name': 'repo-scope-guard (quoted separator hiding other org in bash -c, blocked)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': "bash -c 'cd /tmp; git clone https://github.com/facebook/react.git'"
+            }},
+            'expected_exit': 2
+        },
+        {
+            'name': 'repo-scope-guard (inline AI_GIT_ALLOWED_OWNERS does not widen scope, blocked)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': 'AI_GIT_ALLOWED_OWNERS=facebook gh pr list -R facebook/react'
+            }},
+            'expected_exit': 2
+        },
+        {
+            'name': 'repo-scope-guard (unterminated quote fails closed)',
+            'hook': 'repo-scope-guard',
+            'input': {'tool_input': {
+                'command': "git clone 'https://github.com/facebook/react.git"
+            }},
+            'expected_exit': 2
+        },
     ]
 
     passed = 0
