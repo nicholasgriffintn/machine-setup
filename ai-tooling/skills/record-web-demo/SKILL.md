@@ -13,6 +13,16 @@ Drive a real Chromium through a JSON script of steps, capture it at Retina resol
 uv run --project "$SKILL_DIR/scripts" python "$SKILL_DIR/scripts/record_demo.py" <command> ...
 ```
 
+## Examples (only for humans)
+
+Without audio:
+
+https://github.com/user-attachments/assets/5295fb75-7246-4375-83db-00712ddd0e88
+
+With audio:
+
+https://github.com/user-attachments/assets/f0d0d871-082f-4d7d-a6d3-e64c8576300e
+
 ## Workflow
 
 - **Confirm the target.** Get the URL and the story to tell (3–8 beats). For a local app, check the dev server is already running; start it only with the project's documented command, and stop it afterwards if you started it.
