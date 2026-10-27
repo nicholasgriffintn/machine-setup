@@ -61,6 +61,7 @@ Central principles for agents, skills, and commands. Reference this file in your
 ## Documentation
 
 - Do not add unsolicited documentation, feature inventories, migration notes, or README sections. Add new documentation only when the user explicitly requests it.
+- Do not write an ADR for feature behaviour, defaults, thresholds or fixes. Describe user-facing changes in the project's release notes (changesets where they exist) and keep ADRs for hard-to-reverse architectural decisions. Update the ADR that already owns a boundary before adding a new one.
 - If a requested code change makes existing instructions incorrect, correct only the affected text and keep the edit minimal.
 - Act as editor, not replacement author.
 - When editing prose, retain original voice and keep changes small.

@@ -1,0 +1,8 @@
+[project]
+name = "record-web-demo"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pillow>=11",
+    "playwright>=1.49.0",
+]

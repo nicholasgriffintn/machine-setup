@@ -85,6 +85,8 @@ Only offer to create an ADR when all three are true:
 2. **Surprising without context** — a future reader will wonder "why did they do it this way?"
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
-If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+If any of the three is missing, skip the ADR. Most decisions in a session fail at least one. Feature behaviour, defaults and thresholds belong in the project's release notes or the owning README, not an ADR.
+
+When an ADR already covers the boundary, update or supersede it rather than adding a new one. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
 
 </supporting-info>

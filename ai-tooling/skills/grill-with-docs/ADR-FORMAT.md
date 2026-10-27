@@ -36,6 +36,8 @@ All three of these must be true:
 
 If a decision is easy to reverse, skip it — you'll just reverse it. If it's not surprising, nobody will wonder why. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
 
+Offer at most one ADR per piece of work, and prefer amending an existing ADR on the same boundary. A feature is not an architectural decision: record what it does and how to use it in the project's release notes (for example a changeset) or its README.
+
 ### What qualifies
 
 - **Architectural shape.** "We're using a monorepo." "The write model is event-sourced, the read model is projected into Postgres."
@@ -45,3 +47,10 @@ If a decision is easy to reverse, skip it — you'll just reverse it. If it's no
 - **Deliberate deviations from the obvious path.** "We're using manual SQL instead of an ORM because X." Anything where a reasonable reader would assume the opposite. These stop the next engineer from "fixing" something that was deliberate.
 - **Constraints not visible in the code.** "We can't use AWS because of compliance requirements." "Response times must be under 200ms because of the partner API contract."
 - **Rejected alternatives when the rejection is non-obvious.** If you considered GraphQL and picked REST for subtle reasons, record it — otherwise someone will suggest GraphQL again in six months.
+
+### What does not qualify
+
+- Feature behaviour, product copy, limits, thresholds and default values.
+- Bug fixes, migrations and one-off clean-ups.
+- Anything already enforced by a test or a type, unless the reason behind it is surprising.
+- A new decision on a boundary an existing ADR already owns. Amend that ADR instead.
