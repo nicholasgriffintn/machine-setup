@@ -8,3 +8,4 @@ __pycache__
 .config/opencode/command
 .config/opencode/INSTRUCTIONS.md
 ai-tooling/claude-settings.local.json
+ai-tooling/skills/synced/
