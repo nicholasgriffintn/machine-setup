@@ -15,8 +15,13 @@ setopt HIST_IGNORE_SPACE         # Don't record commands starting with space
 setopt HIST_VERIFY               # Show command with history expansion before running
 setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks
 setopt SHARE_HISTORY             # Share history between sessions
-setopt NO_BAD_PATTERN            # Treat bad glob patterns as errors
-setopt NO_EQUALS                 # Disallow `foo=bar` without `export`
+setopt NO_BAD_PATTERN            # Warn on bad glob patterns instead of aborting the command
+setopt NO_EQUALS                 # Don't expand `=cmd` to the command's path
+
+# Job control
+setopt NO_NOTIFY                 # Report job status before the next prompt, not from the signal handler
+setopt NO_HUP                    # Don't SIGHUP (or warn about) running jobs when the shell exits
+setopt NO_CHECK_JOBS             # Don't query about background jobs on exit
 
 # Directory navigation
 setopt AUTO_CD                   # cd by typing directory name

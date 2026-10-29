@@ -57,6 +57,9 @@ brew "btop"
 brew "atuin"
 brew "httpie"
 
+# Fonts referenced by vscode/settings.json and ghostty/config. BBC Reith Sans
+# is proprietary and installed separately (BBC device management) -- the font
+# stacks fall back to the system sans if it's absent.
 cask "font-fantasque-sans-mono-nerd-font"
 cask "font-meslo-lg-nerd-font"
 cask "font-fira-code"

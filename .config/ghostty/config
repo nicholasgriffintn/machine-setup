@@ -1,6 +1,11 @@
 #
 # Ghostty Terminal Configuration
 #
+# Symlinked as ~/.config/ghostty by machine-setup.sh.
+# Ghostty drops values it can't parse without erroring, so after editing:
+#   ghostty +validate-config   -- syntax
+#   ghostty +show-config       -- what it actually ended up with
+#
 
 #
 # Theme & Appearance
@@ -10,25 +15,39 @@ font-family = FantasqueSansM Nerd Font Mono
 font-size = 15
 font-thicken = true
 window-padding-balance = true
-window-padding-x = 5
-window-padding-y = 0,10
-window-width = 350
-window-height = 472
+window-padding-x = 8
+window-padding-y = 4,8
 cursor-style = bar
 cursor-style-blink = false
-window-show-tab-bar = "always"
+macos-titlebar-style = tabs
+background-opacity = 0.97
+background-blur = 20
+
+#
+# Window
+#
+# Measured in cells, not pixels. The previous 350x472 asked for a window
+# roughly ten screens tall, leaving macOS to clamp it to something arbitrary
+# on every launch.
+window-width = 200
+window-height = 50
+window-save-state = always
+# Quoting made this a literal `"always"`, which isn't a valid enum member.
+window-show-tab-bar = always
 
 #
 # Mouse & Clipboard
 #
 mouse-hide-while-typing = true
-copy-on-select = true
+copy-on-select = clipboard
 clipboard-paste-protection = true
 
 #
 # Shell Integration
 #
-shell-integration-features = true
+# This takes a feature list, not a boolean -- `true` parsed as nothing.
+shell-integration = zsh
+shell-integration-features = cursor,sudo,title
 
 #
 # Links & URLs
@@ -38,18 +57,27 @@ link-url = true
 #
 # Scrollback
 #
-scrollback-limit = 50000
+# Measured in bytes. The previous `50000` capped scrollback at 50 KB -- a few
+# hundred lines -- rather than the 50,000 lines intended. This is 50 MB.
+scrollback-limit = 52428800
 
 #
 # Updates
 #
+# `tip` tracks unreleased nightly builds and is the likeliest explanation for
+# Ghostty crashing: this machine was running 1.4.1-main+20ba6462d.
 auto-update = download
-auto-update-channel = tip
+auto-update-channel = stable
 
 #
 # Keybindings
 #
 keybind = shift+enter=text:\n
+keybind = global:cmd+grave_accent=toggle_quick_terminal
+keybind = cmd+shift+r=reload_config
+macos-option-as-alt = left
 
 #
-working-directory = ~/workspace
+# Must be an absolute path, `home`, or `inherit` -- `~/workspace` doesn't
+# expand here and was being silently discarded.
+working-directory = inherit

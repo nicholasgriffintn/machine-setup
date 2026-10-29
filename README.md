@@ -63,3 +63,34 @@ A few things worth knowing if you're touching this system:
 - **`ai-tooling/claude-settings.json`** (git-tracked) holds the App ID and the private key's _path_ -- never the key itself. **`ai-tooling/claude-settings.local.json`** (gitignored) holds anything that's a live credential, e.g. a refreshed `GH_TOKEN`. Both get merged into `~/.claude/settings.json` by `ai-tooling/scripts/render-claude-settings.py`, and mirrored into `~/.codex/config.toml` by `ai-tooling/scripts/sync-codex-env.py` -- those rendered files, not the repo, are what Claude Code and Codex actually read.
 - A `launchd` agent (`com.nicholasgriffin.machine-setup.refresh-gh-token`) mints a fresh installation token every 30 minutes, since GitHub App tokens expire in about an hour. Its logs are at `~/Library/Logs/machine-setup/refresh-gh-token.log`.
 - To stop it: `launchctl unload ~/Library/LaunchAgents/com.nicholasgriffin.machine-setup.refresh-gh-token.plist`.
+
+### Editor and Terminal
+
+VS Code used to drift -- the theme and fonts would reset every few days. Three things caused it, and `vscode/settings.json` plus `scripts/sync-vscode.py` fix all three:
+
+- Nothing pinned `workbench.colorTheme` or any font family, so VS Code quietly fell back to Dark+ and the default fonts whenever a theme extension updated.
+- `window.autoDetectColorScheme` follows the macOS appearance, which is a second, invisible owner of the theme. It's now explicitly off.
+- Settings Sync merges stable and Insiders into one bucket, so the last window you closed won. The repo is now the tiebreaker.
+
+`machine-setup.sh` applies this on every run. To re-apply without a full setup:
+
+```bash
+# Apply the baseline to stable, Insiders, and every profile under each
+python3 scripts/sync-vscode.py
+
+# See what would change first
+python3 scripts/sync-vscode.py --dry-run
+```
+
+It merges rather than overwrites: only the keys the repo defines are touched, so machine-local values (agent sandbox paths, per-machine `typescript.tsdk`) survive. The previous file is kept as `settings.json.bak`. `vscode/extensions.txt` lists the extensions it installs, including the Catppuccin theme the settings depend on -- a theme ID pointing at an uninstalled extension is itself a silent reset. It calls the launcher inside each app bundle, so it works on a fresh machine without first running **Install 'code' command in PATH**.
+
+If Settings Sync keeps pulling older values back from another machine, turn `Settings` off in **Settings Sync: Configure** and let this repo own them.
+
+Ghostty's config lives at `.config/ghostty/config`, which `~/.config/ghostty` symlinks to, so a change here lands on the next launch. Ghostty drops values it can't parse without erroring -- `window-show-tab-bar = "always"`, `shell-integration-features = true` and `scrollback-limit = 50000` (that option is in bytes) all sat unapplied for months -- so check your work:
+
+```bash
+ghostty +validate-config   # syntax
+ghostty +show-config       # what it actually ended up with
+```
+
+The update channel is pinned to `stable`. If Ghostty is currently on a `tip` build (check `ghostty +version`), the config won't downgrade it -- reinstall with `brew reinstall --cask ghostty`.

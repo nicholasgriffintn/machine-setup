@@ -342,6 +342,20 @@ if [ -f "$SCRIPT_DIR/tmux.conf" ]; then
     fi
 fi
 
+# Ghostty reports nothing on a bad value -- it drops the line and carries on,
+# which is how window-show-tab-bar = "always" sat unapplied for months.
+if command -v ghostty &> /dev/null && ! ghostty +validate-config &> /dev/null; then
+    log warn "Ghostty reported config errors -- run: ghostty +validate-config"
+fi
+
+# VS Code configuration
+# Pins the theme, fonts and editor defaults across stable, Insiders and every
+# profile. Re-runnable: it only touches the keys the repo defines.
+if [ -f "$SCRIPT_DIR/vscode/settings.json" ]; then
+    log info "Syncing VS Code settings..."
+    python3 "$SCRIPT_DIR/scripts/sync-vscode.py" || log warn "VS Code sync failed, continuing"
+fi
+
 if [ ! -d "$HOME/.cargo" ]; then
     if spin "Installing Rust..." bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'; then
         . "$HOME/.cargo/env"

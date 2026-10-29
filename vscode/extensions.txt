@@ -1,0 +1,57 @@
+# Extensions installed by scripts/sync-vscode.py.
+# One marketplace ID per line; blank lines and # comments are ignored.
+
+# Theme -- pinned so the UI stops drifting back to defaults
+catppuccin.catppuccin-vsc
+catppuccin.catppuccin-vsc-icons
+
+# Editing + diagnostics
+usernamehw.errorlens
+streetsidesoftware.code-spell-checker
+editorconfig.editorconfig
+
+# Copilot is deliberately absent: github.copilot-chat now ships built-in, and
+# installing github.copilot tries to downgrade it, which fails the whole run.
+
+# TypeScript / JavaScript
+ms-vscode.vscode-typescript-next
+dbaeumer.vscode-eslint
+esbenp.prettier-vscode
+oxc.oxc-vscode
+vitest.explorer
+yoavbls.pretty-ts-errors
+mattpocock.ts-error-translator
+ms-playwright.playwright
+
+# Python / notebooks
+ms-python.python
+ms-python.vscode-pylance
+ms-python.debugpy
+ms-python.vscode-python-envs
+ms-toolsai.jupyter
+ms-toolsai.jupyter-renderers
+kevinrose.vsc-python-indent
+
+# Elixir
+jakebecker.elixir-ls
+
+# Config, infra and data formats
+redhat.vscode-yaml
+github.vscode-github-actions
+ms-azuretools.vscode-containers
+alexcvzz.vscode-sqlite
+dvirtz.parquet-viewer
+nicholasgriffin.vscode-database-editor
+nicholasgriffin.wrangler-state-viewer
+
+# Docs and diagrams
+yzhang.markdown-all-in-one
+bierner.markdown-mermaid
+unifiedjs.vscode-mdx
+pomdtr.excalidraw-editor
+jebbs.plantuml
+
+# Collaboration
+github.vscode-pull-request-github
+atlassian.atlascode
+vsls-contrib.codetour
